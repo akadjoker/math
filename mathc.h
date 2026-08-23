@@ -1,6 +1,7 @@
 #ifndef MATHC_INCLUDE_MATHC_H
 #define MATHC_INCLUDE_MATHC_H
 
+#include <cmath>
 #include <cstdint>
 #include <ostream>
 
@@ -23,66 +24,98 @@ namespace Math
             float v[2];
         };
 
-        Vec2();
-        Vec2(float x, float y);
-        explicit Vec2(float scalar);
+        Vec2() : x(0.0f), y(0.0f) {}
+        Vec2(float x, float y) : x(x), y(y) {}
+        explicit Vec2(float scalar) : x(scalar), y(scalar) {}
 
-        float &operator[](int index);
-        const float &operator[](int index) const;
+        float &operator[](int index) { return v[index]; }
+        const float &operator[](int index) const { return v[index]; }
 
-        Vec2 operator+(const Vec2 &other) const;
-        Vec2 operator-(const Vec2 &other) const;
-        Vec2 operator*(const Vec2 &other) const;
-        Vec2 operator/(const Vec2 &other) const;
+        Vec2 operator+(const Vec2 &o) const { return Vec2(x + o.x, y + o.y); }
+        Vec2 operator-(const Vec2 &o) const { return Vec2(x - o.x, y - o.y); }
+        Vec2 operator*(const Vec2 &o) const { return Vec2(x * o.x, y * o.y); }
+        Vec2 operator/(const Vec2 &o) const { return Vec2(x / o.x, y / o.y); }
 
-        Vec2 operator*(float scalar) const;
-        Vec2 operator/(float scalar) const;
+        Vec2 operator*(float s) const { return Vec2(x * s, y * s); }
+        Vec2 operator/(float s) const
+        {
+            float inv = 1.0f / s;
+            return Vec2(x * inv, y * inv);
+        }
 
-        Vec2 &operator+=(const Vec2 &other);
-        Vec2 &operator-=(const Vec2 &other);
-        Vec2 &operator*=(const Vec2 &other);
-        Vec2 &operator/=(const Vec2 &other);
-        Vec2 &operator*=(float scalar);
-        Vec2 &operator/=(float scalar);
+        Vec2 &operator+=(const Vec2 &o) { x += o.x; y += o.y; return *this; }
+        Vec2 &operator-=(const Vec2 &o) { x -= o.x; y -= o.y; return *this; }
+        Vec2 &operator*=(const Vec2 &o) { x *= o.x; y *= o.y; return *this; }
+        Vec2 &operator/=(const Vec2 &o) { x /= o.x; y /= o.y; return *this; }
+        Vec2 &operator*=(float s) { x *= s; y *= s; return *this; }
+        Vec2 &operator/=(float s)
+        {
+            float inv = 1.0f / s;
+            x *= inv; y *= inv;
+            return *this;
+        }
 
-        Vec2 operator-() const;
+        Vec2 operator-() const { return Vec2(-x, -y); }
 
-        bool operator==(const Vec2 &other) const;
-        bool operator!=(const Vec2 &other) const;
+        bool operator==(const Vec2 &o) const
+        {
+            return std::fabs(x - o.x) < EPSILON && std::fabs(y - o.y) < EPSILON;
+        }
+        bool operator!=(const Vec2 &o) const { return !(*this == o); }
 
-        float LengthSquared() const;
-        float Length() const;
-        Vec2 Normalized() const;
-        Vec2 NormalizedSafe() const;
-        void Normalize();
-        void NormalizeSafe();
-        float Dot(const Vec2 &other) const;
-        float Cross(const Vec2 &other) const;
+        float LengthSquared() const { return x * x + y * y; }
+        float Length() const { return std::sqrt(LengthSquared()); }
 
-        float Angle() const;
-        float AngleDeg() const;
-        Vec2 Rotate(float angleRad) const;
-        Vec2 RotateDeg(float angleDeg) const;
+        Vec2 Normalized() const
+        {
+            float inv = 1.0f / std::sqrt(LengthSquared());
+            return Vec2(x * inv, y * inv);
+        }
 
-        static Vec2 FromAngle(float angleRad);
-        static Vec2 FromAngleDeg(float angleDeg);
-        static float AngleBetween(const Vec2 &a, const Vec2 &b);
-        static float AngleBetweenDeg(const Vec2 &a, const Vec2 &b);
-        static float Dot(const Vec2 &a, const Vec2 &b);
-        static float Cross(const Vec2 &a, const Vec2 &b);
-        static float Distance(const Vec2 &a, const Vec2 &b);
-        static float DistanceSquared(const Vec2 &a, const Vec2 &b);
-        static Vec2 Lerp(const Vec2 &a, const Vec2 &b, float t);
-        static Vec2 Min(const Vec2 &a, const Vec2 &b);
-        static Vec2 Max(const Vec2 &a, const Vec2 &b);
-        static Vec2 Clamp(const Vec2 &v, const Vec2 &lo, const Vec2 &hi);
+        Vec2 NormalizedSafe() const
+        {
+            float rawLenSq = LengthSquared();
+            float lenSq = rawLenSq > EPSILON * EPSILON ? rawLenSq : EPSILON * EPSILON;
+            float inv = 1.0f / std::sqrt(lenSq);
+            return Vec2(x * inv, y * inv);
+        }
+
+        void Normalize() { *this = Normalized(); }
+        void NormalizeSafe() { *this = NormalizedSafe(); }
+
+        float Dot(const Vec2 &o) const { return x * o.x + y * o.y; }
+        float Cross(const Vec2 &o) const { return x * o.y - y * o.x; }
+
+        float Angle() const { return std::atan2(y, x); }
+        float AngleDeg() const { return Angle() * RAD2DEG; }
+
+        Vec2 Rotate(float angleRad) const
+        {
+            float s = std::sin(angleRad);
+            float c = std::cos(angleRad);
+            return Vec2(x * c - y * s, x * s + y * c);
+        }
+        Vec2 RotateDeg(float angleDeg) const { return Rotate(angleDeg * DEG2RAD); }
+
+        static Vec2 FromAngle(float angleRad) { return Vec2(std::cos(angleRad), std::sin(angleRad)); }
+        static Vec2 FromAngleDeg(float angleDeg) { return FromAngle(angleDeg * DEG2RAD); }
+        static float AngleBetween(const Vec2 &a, const Vec2 &b) { return std::atan2(a.Cross(b), a.Dot(b)); }
+        static float AngleBetweenDeg(const Vec2 &a, const Vec2 &b) { return AngleBetween(a, b) * RAD2DEG; }
+        static float Dot(const Vec2 &a, const Vec2 &b) { return a.Dot(b); }
+        static float Cross(const Vec2 &a, const Vec2 &b) { return a.Cross(b); }
+        static float Distance(const Vec2 &a, const Vec2 &b) { return (a - b).Length(); }
+        static float DistanceSquared(const Vec2 &a, const Vec2 &b) { return (a - b).LengthSquared(); }
+        static Vec2 Lerp(const Vec2 &a, const Vec2 &b, float t) { return a + (b - a) * t; }
+        static Vec2 Min(const Vec2 &a, const Vec2 &b) { return Vec2(a.x < b.x ? a.x : b.x, a.y < b.y ? a.y : b.y); }
+        static Vec2 Max(const Vec2 &a, const Vec2 &b) { return Vec2(a.x > b.x ? a.x : b.x, a.y > b.y ? a.y : b.y); }
+        static Vec2 Clamp(const Vec2 &v, const Vec2 &lo, const Vec2 &hi) { return Min(Max(v, lo), hi); }
         static const Vec2 Zero;
         static const Vec2 One;
         static const Vec2 UnitX;
         static const Vec2 UnitY;
     };
 
-    Vec2 operator*(float scalar, const Vec2 &v);
+    inline Vec2 operator*(float scalar, const Vec2 &v) { return v * scalar; }
     std::ostream &operator<<(std::ostream &os, const Vec2 &v);
 
     struct Vec3
@@ -96,61 +129,112 @@ namespace Math
             float v[3];
         };
 
-        Vec3();
-        Vec3(float x, float y, float z);
-        explicit Vec3(float scalar);
-        Vec3(const Vec2 &xy, float z);
+        Vec3() : x(0.0f), y(0.0f), z(0.0f) {}
+        Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
+        explicit Vec3(float scalar) : x(scalar), y(scalar), z(scalar) {}
+        Vec3(const Vec2 &xy, float z) : x(xy.x), y(xy.y), z(z) {}
 
-        float &operator[](int index);
-        const float &operator[](int index) const;
+        float &operator[](int index) { return v[index]; }
+        const float &operator[](int index) const { return v[index]; }
 
-        Vec3 operator+(const Vec3 &other) const;
-        Vec3 operator-(const Vec3 &other) const;
-        Vec3 operator*(const Vec3 &other) const;
-        Vec3 operator/(const Vec3 &other) const;
+        Vec3 operator+(const Vec3 &o) const { return Vec3(x + o.x, y + o.y, z + o.z); }
+        Vec3 operator-(const Vec3 &o) const { return Vec3(x - o.x, y - o.y, z - o.z); }
+        Vec3 operator*(const Vec3 &o) const { return Vec3(x * o.x, y * o.y, z * o.z); }
+        Vec3 operator/(const Vec3 &o) const { return Vec3(x / o.x, y / o.y, z / o.z); }
 
-        Vec3 operator*(float scalar) const;
-        Vec3 operator/(float scalar) const;
+        Vec3 operator*(float s) const { return Vec3(x * s, y * s, z * s); }
+        Vec3 operator/(float s) const
+        {
+            float inv = 1.0f / s;
+            return Vec3(x * inv, y * inv, z * inv);
+        }
 
-        Vec3 &operator+=(const Vec3 &other);
-        Vec3 &operator-=(const Vec3 &other);
-        Vec3 &operator*=(const Vec3 &other);
-        Vec3 &operator/=(const Vec3 &other);
-        Vec3 &operator*=(float scalar);
-        Vec3 &operator/=(float scalar);
+        Vec3 &operator+=(const Vec3 &o) { x += o.x; y += o.y; z += o.z; return *this; }
+        Vec3 &operator-=(const Vec3 &o) { x -= o.x; y -= o.y; z -= o.z; return *this; }
+        Vec3 &operator*=(const Vec3 &o) { x *= o.x; y *= o.y; z *= o.z; return *this; }
+        Vec3 &operator/=(const Vec3 &o) { x /= o.x; y /= o.y; z /= o.z; return *this; }
+        Vec3 &operator*=(float s) { x *= s; y *= s; z *= s; return *this; }
+        Vec3 &operator/=(float s)
+        {
+            float inv = 1.0f / s;
+            x *= inv; y *= inv; z *= inv;
+            return *this;
+        }
 
-        Vec3 operator-() const;
+        Vec3 operator-() const { return Vec3(-x, -y, -z); }
 
-        bool operator==(const Vec3 &other) const;
-        bool operator!=(const Vec3 &other) const;
+        bool operator==(const Vec3 &o) const
+        {
+            return std::fabs(x - o.x) < EPSILON && std::fabs(y - o.y) < EPSILON && std::fabs(z - o.z) < EPSILON;
+        }
+        bool operator!=(const Vec3 &o) const { return !(*this == o); }
 
-        float LengthSquared() const;
-        float Length() const;
-        Vec3 Normalized() const;
-        Vec3 NormalizedSafe() const;
-        void Normalize();
-        void NormalizeSafe();
-        float Dot(const Vec3 &other) const;
-        Vec3 Cross(const Vec3 &other) const;
+        float LengthSquared() const { return x * x + y * y + z * z; }
+        float Length() const { return std::sqrt(LengthSquared()); }
 
-        Vec2 xy() const;
-        Vec3 RotateX(float angleRad) const;
-        Vec3 RotateY(float angleRad) const;
-        Vec3 RotateZ(float angleRad) const;
-        Vec3 RotateXDeg(float angleDeg) const;
-        Vec3 RotateYDeg(float angleDeg) const;
-        Vec3 RotateZDeg(float angleDeg) const;
+        Vec3 Normalized() const
+        {
+            float inv = 1.0f / std::sqrt(LengthSquared());
+            return Vec3(x * inv, y * inv, z * inv);
+        }
 
-        static float AngleBetween(const Vec3 &a, const Vec3 &b);
-        static float AngleBetweenDeg(const Vec3 &a, const Vec3 &b);
-        static float Dot(const Vec3 &a, const Vec3 &b);
-        static Vec3 Cross(const Vec3 &a, const Vec3 &b);
-        static float Distance(const Vec3 &a, const Vec3 &b);
-        static float DistanceSquared(const Vec3 &a, const Vec3 &b);
-        static Vec3 Lerp(const Vec3 &a, const Vec3 &b, float t);
-        static Vec3 Min(const Vec3 &a, const Vec3 &b);
-        static Vec3 Max(const Vec3 &a, const Vec3 &b);
-        static Vec3 Clamp(const Vec3 &v, const Vec3 &lo, const Vec3 &hi);
+        Vec3 NormalizedSafe() const
+        {
+            float rawLenSq = LengthSquared();
+            float lenSq = rawLenSq > EPSILON * EPSILON ? rawLenSq : EPSILON * EPSILON;
+            float inv = 1.0f / std::sqrt(lenSq);
+            return Vec3(x * inv, y * inv, z * inv);
+        }
+
+        void Normalize() { *this = Normalized(); }
+        void NormalizeSafe() { *this = NormalizedSafe(); }
+
+        float Dot(const Vec3 &o) const { return x * o.x + y * o.y + z * o.z; }
+        Vec3 Cross(const Vec3 &o) const
+        {
+            return Vec3(y * o.z - z * o.y, z * o.x - x * o.z, x * o.y - y * o.x);
+        }
+
+        Vec2 xy() const { return Vec2(x, y); }
+
+        Vec3 RotateX(float angleRad) const
+        {
+            float s = std::sin(angleRad);
+            float c = std::cos(angleRad);
+            return Vec3(x, y * c - z * s, y * s + z * c);
+        }
+        Vec3 RotateY(float angleRad) const
+        {
+            float s = std::sin(angleRad);
+            float c = std::cos(angleRad);
+            return Vec3(x * c + z * s, y, -x * s + z * c);
+        }
+        Vec3 RotateZ(float angleRad) const
+        {
+            float s = std::sin(angleRad);
+            float c = std::cos(angleRad);
+            return Vec3(x * c - y * s, x * s + y * c, z);
+        }
+        Vec3 RotateXDeg(float angleDeg) const { return RotateX(angleDeg * DEG2RAD); }
+        Vec3 RotateYDeg(float angleDeg) const { return RotateY(angleDeg * DEG2RAD); }
+        Vec3 RotateZDeg(float angleDeg) const { return RotateZ(angleDeg * DEG2RAD); }
+
+        static float AngleBetween(const Vec3 &a, const Vec3 &b) { return std::atan2(a.Cross(b).Length(), a.Dot(b)); }
+        static float AngleBetweenDeg(const Vec3 &a, const Vec3 &b) { return AngleBetween(a, b) * RAD2DEG; }
+        static float Dot(const Vec3 &a, const Vec3 &b) { return a.Dot(b); }
+        static Vec3 Cross(const Vec3 &a, const Vec3 &b) { return a.Cross(b); }
+        static float Distance(const Vec3 &a, const Vec3 &b) { return (a - b).Length(); }
+        static float DistanceSquared(const Vec3 &a, const Vec3 &b) { return (a - b).LengthSquared(); }
+        static Vec3 Lerp(const Vec3 &a, const Vec3 &b, float t) { return a + (b - a) * t; }
+        static Vec3 Min(const Vec3 &a, const Vec3 &b)
+        {
+            return Vec3(a.x < b.x ? a.x : b.x, a.y < b.y ? a.y : b.y, a.z < b.z ? a.z : b.z);
+        }
+        static Vec3 Max(const Vec3 &a, const Vec3 &b)
+        {
+            return Vec3(a.x > b.x ? a.x : b.x, a.y > b.y ? a.y : b.y, a.z > b.z ? a.z : b.z);
+        }
+        static Vec3 Clamp(const Vec3 &v, const Vec3 &lo, const Vec3 &hi) { return Min(Max(v, lo), hi); }
         static const Vec3 Zero;
         static const Vec3 One;
         static const Vec3 UnitX;
@@ -158,7 +242,7 @@ namespace Math
         static const Vec3 UnitZ;
     };
 
-    Vec3 operator*(float scalar, const Vec3 &v);
+    inline Vec3 operator*(float scalar, const Vec3 &v) { return v * scalar; }
     std::ostream &operator<<(std::ostream &os, const Vec3 &v);
 
     struct alignas(16) Vec4
@@ -172,55 +256,89 @@ namespace Math
             float v[4];
         };
 
-        Vec4();
-        Vec4(float x, float y, float z, float w);
-        explicit Vec4(float scalar);
-        Vec4(const Vec3 &xyz, float w);
-        Vec4(const Vec2 &xy, float z, float w);
+        Vec4() : x(0.0f), y(0.0f), z(0.0f), w(0.0f) {}
+        Vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+        explicit Vec4(float scalar) : x(scalar), y(scalar), z(scalar), w(scalar) {}
+        Vec4(const Vec3 &xyz, float w) : x(xyz.x), y(xyz.y), z(xyz.z), w(w) {}
+        Vec4(const Vec2 &xy, float z, float w) : x(xy.x), y(xy.y), z(z), w(w) {}
 
-        float &operator[](int index);
-        const float &operator[](int index) const;
+        float &operator[](int index) { return v[index]; }
+        const float &operator[](int index) const { return v[index]; }
 
-        Vec4 operator+(const Vec4 &other) const;
-        Vec4 operator-(const Vec4 &other) const;
-        Vec4 operator*(const Vec4 &other) const;
-        Vec4 operator/(const Vec4 &other) const;
+        Vec4 operator+(const Vec4 &o) const { return Vec4(x + o.x, y + o.y, z + o.z, w + o.w); }
+        Vec4 operator-(const Vec4 &o) const { return Vec4(x - o.x, y - o.y, z - o.z, w - o.w); }
+        Vec4 operator*(const Vec4 &o) const { return Vec4(x * o.x, y * o.y, z * o.z, w * o.w); }
+        Vec4 operator/(const Vec4 &o) const { return Vec4(x / o.x, y / o.y, z / o.z, w / o.w); }
+        Vec4 operator*(float s) const { return Vec4(x * s, y * s, z * s, w * s); }
+        Vec4 operator/(float s) const
+        {
+            float inv = 1.0f / s;
+            return Vec4(x * inv, y * inv, z * inv, w * inv);
+        }
 
-        Vec4 operator*(float scalar) const;
-        Vec4 operator/(float scalar) const;
+        Vec4 &operator+=(const Vec4 &o) { return *this = *this + o; }
+        Vec4 &operator-=(const Vec4 &o) { return *this = *this - o; }
+        Vec4 &operator*=(const Vec4 &o) { return *this = *this * o; }
+        Vec4 &operator/=(const Vec4 &o) { return *this = *this / o; }
+        Vec4 &operator*=(float s) { return *this = *this * s; }
+        Vec4 &operator/=(float s) { return *this = *this / s; }
 
-        Vec4 &operator+=(const Vec4 &other);
-        Vec4 &operator-=(const Vec4 &other);
-        Vec4 &operator*=(const Vec4 &other);
-        Vec4 &operator/=(const Vec4 &other);
-        Vec4 &operator*=(float scalar);
-        Vec4 &operator/=(float scalar);
+        Vec4 operator-() const { return Vec4(-x, -y, -z, -w); }
 
-        Vec4 operator-() const;
+        bool operator==(const Vec4 &o) const
+        {
+            return std::fabs(x - o.x) < EPSILON && std::fabs(y - o.y) < EPSILON &&
+                   std::fabs(z - o.z) < EPSILON && std::fabs(w - o.w) < EPSILON;
+        }
+        bool operator!=(const Vec4 &o) const { return !(*this == o); }
 
-        bool operator==(const Vec4 &other) const;
-        bool operator!=(const Vec4 &other) const;
+        float LengthSquared() const { return x * x + y * y + z * z + w * w; }
+        float Length() const { return std::sqrt(LengthSquared()); }
 
-        float LengthSquared() const;
-        float Length() const;
-        Vec4 Normalized() const;
-        Vec4 NormalizedSafe() const;
-        void Normalize();
-        void NormalizeSafe();
-        float Dot(const Vec4 &other) const;
+        Vec4 Normalized() const
+        {
+            float inv = 1.0f / std::sqrt(LengthSquared());
+            return *this * inv;
+        }
 
-        Vec2 xy() const;
-        Vec3 xyz() const;
+        Vec4 NormalizedSafe() const
+        {
+            float rawLenSq = LengthSquared();
+            float lenSq = rawLenSq > EPSILON * EPSILON ? rawLenSq : EPSILON * EPSILON;
+            float inv = 1.0f / std::sqrt(lenSq);
+            return *this * inv;
+        }
 
-        static float AngleBetween(const Vec4 &a, const Vec4 &b);
-        static float AngleBetweenDeg(const Vec4 &a, const Vec4 &b);
-        static float Dot(const Vec4 &a, const Vec4 &b);
-        static float Distance(const Vec4 &a, const Vec4 &b);
-        static float DistanceSquared(const Vec4 &a, const Vec4 &b);
-        static Vec4 Lerp(const Vec4 &a, const Vec4 &b, float t);
-        static Vec4 Min(const Vec4 &a, const Vec4 &b);
-        static Vec4 Max(const Vec4 &a, const Vec4 &b);
-        static Vec4 Clamp(const Vec4 &v, const Vec4 &lo, const Vec4 &hi);
+        void Normalize() { *this = Normalized(); }
+        void NormalizeSafe() { *this = NormalizedSafe(); }
+
+        float Dot(const Vec4 &o) const { return x * o.x + y * o.y + z * o.z + w * o.w; }
+
+        Vec2 xy() const { return Vec2(x, y); }
+        Vec3 xyz() const { return Vec3(x, y, z); }
+
+        static float AngleBetween(const Vec4 &a, const Vec4 &b)
+        {
+            float d = a.Dot(b) / (a.Length() * b.Length());
+            d = d < -1.0f ? -1.0f : (d > 1.0f ? 1.0f : d);
+            return std::acos(d);
+        }
+        static float AngleBetweenDeg(const Vec4 &a, const Vec4 &b) { return AngleBetween(a, b) * RAD2DEG; }
+        static float Dot(const Vec4 &a, const Vec4 &b) { return a.Dot(b); }
+        static float Distance(const Vec4 &a, const Vec4 &b) { return (a - b).Length(); }
+        static float DistanceSquared(const Vec4 &a, const Vec4 &b) { return (a - b).LengthSquared(); }
+        static Vec4 Lerp(const Vec4 &a, const Vec4 &b, float t) { return a + (b - a) * t; }
+        static Vec4 Min(const Vec4 &a, const Vec4 &b)
+        {
+            return Vec4(a.x < b.x ? a.x : b.x, a.y < b.y ? a.y : b.y,
+                        a.z < b.z ? a.z : b.z, a.w < b.w ? a.w : b.w);
+        }
+        static Vec4 Max(const Vec4 &a, const Vec4 &b)
+        {
+            return Vec4(a.x > b.x ? a.x : b.x, a.y > b.y ? a.y : b.y,
+                        a.z > b.z ? a.z : b.z, a.w > b.w ? a.w : b.w);
+        }
+        static Vec4 Clamp(const Vec4 &v, const Vec4 &lo, const Vec4 &hi) { return Min(Max(v, lo), hi); }
         static const Vec4 Zero;
         static const Vec4 One;
         static const Vec4 UnitX;
@@ -229,7 +347,7 @@ namespace Math
         static const Vec4 UnitW;
     };
 
-    Vec4 operator*(float scalar, const Vec4 &v);
+    inline Vec4 operator*(float scalar, const Vec4 &v) { return v * scalar; }
     std::ostream &operator<<(std::ostream &os, const Vec4 &v);
 
     struct Mat2
@@ -432,39 +550,77 @@ namespace Math
             float v[4];
         };
 
-        Quaternion();
-        Quaternion(float x, float y, float z, float w);
+        Quaternion() : x(0.0f), y(0.0f), z(0.0f), w(1.0f) {}
+        Quaternion(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
 
-        float &operator[](int index);
-        const float &operator[](int index) const;
+        float &operator[](int index) { return v[index]; }
+        const float &operator[](int index) const { return v[index]; }
 
-        Quaternion operator+(const Quaternion &other) const;
-        Quaternion operator-(const Quaternion &other) const;
-        Quaternion operator*(const Quaternion &other) const;
-        Quaternion operator*(float scalar) const;
-        Vec3 operator*(const Vec3 &v) const;
+        Quaternion operator+(const Quaternion &o) const { return Quaternion(x + o.x, y + o.y, z + o.z, w + o.w); }
+        Quaternion operator-(const Quaternion &o) const { return Quaternion(x - o.x, y - o.y, z - o.z, w - o.w); }
+        Quaternion operator*(float s) const { return Quaternion(x * s, y * s, z * s, w * s); }
 
-        Quaternion operator-() const;
+        Quaternion operator*(const Quaternion &o) const
+        {
+            return Quaternion(
+                w * o.x + x * o.w + y * o.z - z * o.y,
+                w * o.y - x * o.z + y * o.w + z * o.x,
+                w * o.z + x * o.y - y * o.x + z * o.w,
+                w * o.w - x * o.x - y * o.y - z * o.z);
+        }
 
-        bool operator==(const Quaternion &other) const;
-        bool operator!=(const Quaternion &other) const;
+        Vec3 operator*(const Vec3 &vec) const
+        {
+            Vec3 qv(x, y, z);
+            Vec3 t = qv.Cross(vec) * 2.0f;
+            return vec + t * w + qv.Cross(t);
+        }
 
-        float LengthSquared() const;
-        float Length() const;
-        Quaternion Normalized() const;
-        Quaternion NormalizedSafe() const;
-        void Normalize();
-        void NormalizeSafe();
+        Quaternion operator-() const { return Quaternion(-x, -y, -z, -w); }
 
-        Quaternion Conjugate() const;
-        Quaternion Inverse() const;
-        float Dot(const Quaternion &other) const;
+        bool operator==(const Quaternion &o) const
+        {
+            return std::fabs(x - o.x) < EPSILON && std::fabs(y - o.y) < EPSILON &&
+                   std::fabs(z - o.z) < EPSILON && std::fabs(w - o.w) < EPSILON;
+        }
+        bool operator!=(const Quaternion &o) const { return !(*this == o); }
+
+        float LengthSquared() const { return x * x + y * y + z * z + w * w; }
+        float Length() const { return std::sqrt(LengthSquared()); }
+
+        Quaternion Normalized() const
+        {
+            float inv = 1.0f / std::sqrt(LengthSquared());
+            return *this * inv;
+        }
+        Quaternion NormalizedSafe() const
+        {
+            float rawLenSq = LengthSquared();
+            float lenSq = rawLenSq > EPSILON * EPSILON ? rawLenSq : EPSILON * EPSILON;
+            float inv = 1.0f / std::sqrt(lenSq);
+            return *this * inv;
+        }
+        void Normalize() { *this = Normalized(); }
+        void NormalizeSafe() { *this = NormalizedSafe(); }
+
+        Quaternion Conjugate() const { return Quaternion(-x, -y, -z, w); }
+        Quaternion Inverse() const
+        {
+            float invLenSq = 1.0f / LengthSquared();
+            return Quaternion(-x * invLenSq, -y * invLenSq, -z * invLenSq, w * invLenSq);
+        }
+        float Dot(const Quaternion &o) const { return x * o.x + y * o.y + z * o.z + w * o.w; }
 
         Mat3 ToMat3() const;
         Mat4 ToMat4() const;
 
-        static Quaternion Identity();
-        static Quaternion FromAxisAngle(const Vec3 &axis, float angleRad);
+        static Quaternion Identity() { return Quaternion(); }
+        static Quaternion FromAxisAngle(const Vec3 &axis, float angleRad)
+        {
+            float half = angleRad * 0.5f;
+            float s = std::sin(half);
+            return Quaternion(axis.x * s, axis.y * s, axis.z * s, std::cos(half));
+        }
 
         static Quaternion FromEulerAngles(float pitchX, float yawY, float rollZ);
         static Quaternion FromMat3(const Mat3 &m);
@@ -472,14 +628,18 @@ namespace Math
         static Quaternion FromTo(const Vec3 &from, const Vec3 &to);
         static Quaternion LookRotation(const Vec3 &forward, const Vec3 &up);
 
-        static float Dot(const Quaternion &a, const Quaternion &b);
+        static float Dot(const Quaternion &a, const Quaternion &b) { return a.Dot(b); }
 
-        static Quaternion Lerp(const Quaternion &a, const Quaternion &b, float t);
+        static Quaternion Lerp(const Quaternion &a, const Quaternion &b, float t)
+        {
+            Quaternion bb = a.Dot(b) < 0.0f ? -b : b;
+            return (a * (1.0f - t) + bb * t).Normalized();
+        }
 
         static Quaternion Slerp(const Quaternion &a, const Quaternion &b, float t);
     };
 
-    Quaternion operator*(float scalar, const Quaternion &q);
+    inline Quaternion operator*(float scalar, const Quaternion &q) { return q * scalar; }
     std::ostream &operator<<(std::ostream &os, const Quaternion &q);
 
 #ifndef MATHC_NO_EXTRA
