@@ -1,55 +1,23 @@
-/*
----------------------------------------------------------------------------------
 
-	TerrainRayTest.cpp
-
-	Project(s):
-	TerrainRayTest Project
-
-	Author:
-	Paul Edmondson
-
-	Description:
-	Implementation for the RayTester class
-
-	Notes:
-	None at this time.
-
-	Known Issues:
-	None at this time.
-
----------------------------------------------------------------------------------
-*/
 #include "TerrainRayTest.h"
-
 
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
 #include <memory.h>
 
-
-// To include OpenSteer::maxXXX instead of using __max
 #include "OpenSteer/Utilities.h"
-
 
 using namespace std;
 
-//#include "util.h"
-
-
-
-
 RayTester::RayTester() : data(NULL) {
 }
-
 
 RayTester::~RayTester() {
 	if( data!=NULL )
 		free( data );
 	data=NULL;
 }
-
 
 void RayTester::LoadData( char *fname,	TRTScalar xMin, TRTScalar xMax,
 										TRTScalar yMin, TRTScalar yMax,
@@ -150,7 +118,6 @@ void RayTester::LoadData( char *fname,	TRTScalar xMin, TRTScalar xMax,
 
 }
 
-
 void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TRTScalar *viewNorm, TRTScalar maxt ) const {
 
 	TRTScalar realEyePos[3], realViewNorm[3];
@@ -175,39 +142,34 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 			realViewNorm[2]=viewNorm[2];
 		}
 
-	// find the initial grid cell
 	int xidx=(int)((realEyePos[0]-minx)/xstep);
 	int zidx=(int)((realEyePos[2]-minz)/zstep);
 
-	// need starting point of trace for intersection test
 	TRTScalar lasty=realEyePos[1];
 	TRTScalar newLasty=lasty;
 
-	int idx = xidx+zidx*width;			// the current grid cell
-	TRTScalar tval,tval1=-1,tval2=-1;	// t parameter values for intersection
-	bool mustTest;						// flag for whether or not we test against triangles
+	int idx = xidx+zidx*width;			
+	TRTScalar tval,tval1=-1,tval2=-1;	
+	bool mustTest;						
 
-	// for speed, perform computations according to quadrant
+	if( realViewNorm[0]>0 ) {				
+		if( realViewNorm[2]>0 ) {			
 
-	if( realViewNorm[0]>0 ) {				// Moving to the right
-		if( realViewNorm[2]>0 ) {			// ... and moving downwards
-
-			// Out-of-bounds check
 			if( xidx<0 || zidx<0 ) {
 				tval1=( minx-realEyePos[0] )/realViewNorm[0];
 				tval2=( minz-realEyePos[2] )/realViewNorm[2];
 
-				if( tval1 > tval2 ){		// Hits left edge of terrain
+				if( tval1 > tval2 ){		
 					tval=tval1;
 					xidx=0;
 					zidx=(int)((realEyePos[2]+tval*realViewNorm[2]-minz)/zstep);
-				} else {					// Hits top edge of terrain
+				} else {					
 					tval=tval2;
 					xidx=(int)((realEyePos[0]+tval*realViewNorm[0]-minx)/xstep);
 					zidx=0;
 				}
 
-				if( tval>maxt || tval<0 ) {		// Check if maxt value surpassed
+				if( tval>maxt || tval<0 ) {		
 					results.hitOccurred=false;
 					return;
 				}
@@ -218,20 +180,19 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 
 			while( xidx<width-1 && zidx<height-1 ) {
 
-				// only compute intersection if we have to -- we may have to test triangles anyway
 				if( !( mustTest=(lasty<data[idx].maxy) ) ) {
 					tval1=( data[idx+width+1].pos[0]-realEyePos[0] )/realViewNorm[0];
 					tval2=( data[idx+width+1].pos[2]-realEyePos[2] )/realViewNorm[2];
 
-					if( tval1 < tval2 ){		// Hits right edge
+					if( tval1 < tval2 ){		
 						xidx++;
 						tval=tval1;
-					} else {					// Hits bottom edge
+					} else {					
 						zidx++;
 						tval=tval2;
 					}
 
-					if( tval>maxt ) {		// Check if maxt value surpassed
+					if( tval>maxt ) {		
 						results.hitOccurred=false;
 						return;
 					}
@@ -240,11 +201,10 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 					mustTest=( newLasty<data[idx].maxy );
 				}
 
-				// if the mustTest is true, the ray intersects the y-bounds of the cell
 				if( mustTest ) {
 					RayCastTriangle( results, realEyePos, realViewNorm, data[idx].pos, data[idx+width].pos, data[idx+1].pos );
 					if( results.hitOccurred ){
-						if( results.t>maxt ) {		// Check if maxt value surpassed
+						if( results.t>maxt ) {		
 							results.hitOccurred=false;
 							return;
 						}
@@ -257,7 +217,7 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 
 					RayCastTriangle( results, realEyePos, realViewNorm, data[idx+width+1].pos, data[idx+1].pos, data[idx+width].pos );
 					if( results.hitOccurred ){
-						if( results.t>maxt ) {		// Check if maxt value surpassed
+						if( results.t>maxt ) {		
 							results.hitOccurred=false;
 							return;
 						}
@@ -269,20 +229,19 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 					}
 				}
 
-				// we didn't intersect -- so update the index
-				if( lasty<data[idx].maxy ) {	// in this case, we haven't updated xidx or zidx yet
+				if( lasty<data[idx].maxy ) {	
 					tval1=( data[idx+width+1].pos[0]-realEyePos[0] )/realViewNorm[0];
 					tval2=( data[idx+width+1].pos[2]-realEyePos[2] )/realViewNorm[2];
 
-					if( tval1 < tval2 ){		// Hits right edge
+					if( tval1 < tval2 ){		
 						xidx++;
 						tval=tval1;
-					} else {					// Hits bottom edge
+					} else {					
 						zidx++;
 						tval=tval2;
 					}
 
-					if( tval>maxt ) {		// Check if maxt value surpassed
+					if( tval>maxt ) {		
 						results.hitOccurred=false;
 						return;
 					}
@@ -295,25 +254,24 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 
 			}
 
-		} else {						// ... else moving upwards
+		} else {						
 
-			// Out-of-bounds check
 			if( xidx<0 || zidx>=height-1 ) {
 				tval1=( minx-realEyePos[0] )/realViewNorm[0];
 				if( realViewNorm[2]!=0 )
 					tval2=( maxz-realEyePos[2] )/realViewNorm[2];
 
-				if( realViewNorm[2]==0 || tval1 > tval2 ){		// Hits left edge of terrain
+				if( realViewNorm[2]==0 || tval1 > tval2 ){		
 					tval=tval1;
 					xidx=0;
 					zidx=(int)((realEyePos[2]+tval*realViewNorm[2]-minz)/zstep);
-				} else {					// Hits bottom edge of terrain
+				} else {					
 					tval=tval2;
 					xidx=(int)((realEyePos[0]+tval*realViewNorm[0]-minx)/xstep);
 					zidx=height-1;
 				}
 
-				if( tval>maxt || tval<0 ) {		// Check if maxt value surpassed
+				if( tval>maxt || tval<0 ) {		
 					results.hitOccurred=false;
 					return;
 				}
@@ -324,21 +282,20 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 
 			while( xidx<width-1 && zidx>=0 ) {
 
-				// only compute intersection if we have to -- we may have to test triangles anyway
 				if( !( mustTest=(lasty<data[idx].maxy) ) ) {
 					tval1 = ( data[idx+1].pos[0]-realEyePos[0] )/realViewNorm[0];
 					if( realViewNorm[2]!=0 )
 						tval2 = ( data[idx+1].pos[2]-realEyePos[2] )/realViewNorm[2];
 
-					if( realViewNorm[2]==0 || tval1 < tval2 ){		// Hits right edge
+					if( realViewNorm[2]==0 || tval1 < tval2 ){		
 						xidx++;
 						tval=tval1;
-					} else {					// Hits bottom edge
+					} else {					
 						zidx--;
 						tval=tval2;
 					}
 
-					if( tval>maxt ) {		// Check if maxt value surpassed
+					if( tval>maxt ) {		
 						results.hitOccurred=false;
 						return;
 					}
@@ -347,11 +304,10 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 					mustTest=( newLasty<data[idx].maxy );
 				}
 
-				// if the mustTest is true, the ray intersects the y-bounds of the cell
 				if( mustTest ) {
 					RayCastTriangle( results, realEyePos, realViewNorm, data[idx].pos, data[idx+width].pos, data[idx+1].pos );
 					if( results.hitOccurred ){
-						if( results.t>maxt ) {		// Check if maxt value surpassed
+						if( results.t>maxt ) {		
 							results.hitOccurred=false;
 							return;
 						}
@@ -364,7 +320,7 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 
 					RayCastTriangle( results, realEyePos, realViewNorm, data[idx+width+1].pos, data[idx+1].pos, data[idx+width].pos );
 					if( results.hitOccurred ){
-						if( results.t>maxt ) {		// Check if maxt value surpassed
+						if( results.t>maxt ) {		
 							results.hitOccurred=false;
 							return;
 						}
@@ -376,21 +332,20 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 					}
 				}
 
-				// we didn't intersect -- so update the index
-				if( lasty<data[idx].maxy ) {	// in this case, we haven't updated xidx or zidx yet
+				if( lasty<data[idx].maxy ) {	
 					tval1 = ( data[idx+1].pos[0]-realEyePos[0] )/realViewNorm[0];
 					if( realViewNorm[2]!=0 )
 						tval2 = ( data[idx+1].pos[2]-realEyePos[2] )/realViewNorm[2];
 
-					if( realViewNorm[2]==0 || tval1 < tval2 ){		// Hits right edge
+					if( realViewNorm[2]==0 || tval1 < tval2 ){		
 						xidx++;
 						tval=tval1;
-					} else {					// Hits bottom edge
+					} else {					
 						zidx--;
 						tval=tval2;
 					}
 
-					if( tval>maxt ) {		// Check if maxt value surpassed
+					if( tval>maxt ) {		
 						results.hitOccurred=false;
 						return;
 					}
@@ -402,26 +357,25 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 				lasty=newLasty;
 			}
 		}
-	} else {							// else moving to the left
-		if( realViewNorm[2]>0 ) {			// ... and moving downwards
+	} else {							
+		if( realViewNorm[2]>0 ) {			
 
-			// Out-of-bounds check
 			if( xidx>=width-1 || zidx<0 ) {
 				if( realViewNorm[0]!=0 )
 					tval1=( maxx-realEyePos[0] )/realViewNorm[0];
 				tval2=( minz-realEyePos[2] )/realViewNorm[2];
 
-				if( realViewNorm[0]!=0 && tval1 > tval2 ){		// Hits right edge of terrain
+				if( realViewNorm[0]!=0 && tval1 > tval2 ){		
 					tval=tval1;
 					xidx=width-1;
 					zidx=(int)((realEyePos[2]+tval*realViewNorm[2]-minz)/zstep);
-				} else {					// Hits top edge of terrain
+				} else {					
 					tval=tval2;
 					xidx=(int)((realEyePos[0]+tval*realViewNorm[0]-minx)/xstep);
 					zidx=0;
 				}
 
-				if( tval>maxt || tval<0 ) {		// Check if maxt value surpassed
+				if( tval>maxt || tval<0 ) {		
 					results.hitOccurred=false;
 					return;
 				}
@@ -432,21 +386,20 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 
 			while( xidx>=0 && zidx<height-1 ) {
 
-				// only compute intersection if we have to -- we may have to test triangles anyway
 				if( !( mustTest=(lasty<data[idx].maxy) ) ) {
 					if( realViewNorm[0]!=0 )
 						tval1 = ( data[idx+width].pos[0]-realEyePos[0] )/realViewNorm[0];
 					tval2 = ( data[idx+width].pos[2]-realEyePos[2] )/realViewNorm[2];
 
-					if( realViewNorm[0]!=0 && tval1 < tval2 ){		// Hits right edge
+					if( realViewNorm[0]!=0 && tval1 < tval2 ){		
 						xidx--;
 						tval=tval1;
-					} else {					// Hits bottom edge
+					} else {					
 						zidx++;
 						tval=tval2;
 					}
 
-					if( tval>maxt ) {		// Check if maxt value surpassed
+					if( tval>maxt ) {		
 						results.hitOccurred=false;
 						return;
 					}
@@ -455,11 +408,10 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 					mustTest=( newLasty<data[idx].maxy );
 				}
 
-				// if the mustTest is true, the ray intersects the y-bounds of the cell
 				if( mustTest ) {
 					RayCastTriangle( results, realEyePos, realViewNorm, data[idx].pos, data[idx+width].pos, data[idx+1].pos );
 					if( results.hitOccurred ){
-						if( results.t>maxt ) {		// Check if maxt value surpassed
+						if( results.t>maxt ) {		
 							results.hitOccurred=false;
 							return;
 						}
@@ -472,7 +424,7 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 
 					RayCastTriangle( results, realEyePos, realViewNorm, data[idx+width+1].pos, data[idx+1].pos, data[idx+width].pos );
 					if( results.hitOccurred ){
-						if( results.t>maxt ) {		// Check if maxt value surpassed
+						if( results.t>maxt ) {		
 							results.hitOccurred=false;
 							return;
 						}
@@ -484,21 +436,20 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 					}
 				}
 
-				// we didn't intersect -- so update the index
-				if( lasty<data[idx].maxy ) {	// in this case, we haven't updated xidx or zidx yet
+				if( lasty<data[idx].maxy ) {	
 					if( realViewNorm[0]!=0 )
 						tval1 = ( data[idx+width].pos[0]-realEyePos[0] )/realViewNorm[0];
 					tval2 = ( data[idx+width].pos[2]-realEyePos[2] )/realViewNorm[2];
 
-					if( realViewNorm[0]!=0 && tval1 < tval2 ){		// Hits right edge
+					if( realViewNorm[0]!=0 && tval1 < tval2 ){		
 						xidx--;
 						tval=tval1;
-					} else {					// Hits bottom edge
+					} else {					
 						zidx++;
 						tval=tval2;
 					}
 
-					if( tval>maxt ) {		// Check if maxt value surpassed
+					if( tval>maxt ) {		
 						results.hitOccurred=false;
 						return;
 					}
@@ -509,26 +460,25 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 				idx = xidx+zidx*width;
 				lasty=newLasty;
 			}
-		} else{							// ... else moving upwards
+		} else{							
 
-			// Out-of-bounds check
 			if( xidx>=width-1 || zidx>=height-1 ) {
 				if( realViewNorm[0]!=0 )
 					tval1=( maxx-realEyePos[0] )/realViewNorm[0];
 				if( realViewNorm[2]!=0 )
 					tval2=( maxz-realEyePos[2] )/realViewNorm[2];
 
-				if( realViewNorm[2]==0 || ( realViewNorm[0]!=0 && tval1 > tval2 ) ){		// Hits right edge of terrain
+				if( realViewNorm[2]==0 || ( realViewNorm[0]!=0 && tval1 > tval2 ) ){		
 					tval=tval1;
 					xidx=width-1;
 					zidx=(int)((realEyePos[2]+tval*realViewNorm[2]-minz)/zstep);
-				} else {					// Hits bottom edge of terrain
+				} else {					
 					tval=tval2;
 					xidx=(int)((realEyePos[0]+tval*realViewNorm[0]-minx)/xstep);
 					zidx=height-1;
 				}
 
-				if( tval>maxt || tval<0 ) {		// Check if maxt value surpassed
+				if( tval>maxt || tval<0 ) {		
 					results.hitOccurred=false;
 					return;
 				}
@@ -539,7 +489,6 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 
 			while( xidx>=0 && zidx>=0 ) {
 
-				// only compute intersection if we have to -- we may have to test triangles anyway
 				if( realViewNorm[0]==0 && realViewNorm[2]==0 )
 					mustTest=true;
                 else if( !( mustTest=(lasty<data[idx].maxy) ) ) {
@@ -548,15 +497,15 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 					if( realViewNorm[2]!=0 )
 						tval2 = ( data[idx].pos[2]-realEyePos[2] )/realViewNorm[2];
 
-					if( realViewNorm[2]==0 || ( realViewNorm[0]!=0 && tval1 < tval2 ) ){		// Hits right edge
+					if( realViewNorm[2]==0 || ( realViewNorm[0]!=0 && tval1 < tval2 ) ){		
 						xidx--;
 						tval=tval1;
-					} else {					// Hits bottom edge
+					} else {					
 						zidx--;
 						tval=tval2;
 					}
 
-					if( tval>maxt ) {		// Check if maxt value surpassed
+					if( tval>maxt ) {		
 						results.hitOccurred=false;
 						return;
 					}
@@ -565,11 +514,10 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 					mustTest=( newLasty<data[idx].maxy );
 				}
 
-				// if the mustTest is true, the ray intersects the y-bounds of the cell
 				if( mustTest ) {
 					RayCastTriangle( results, realEyePos, realViewNorm, data[idx].pos, data[idx+width].pos, data[idx+1].pos );
 					if( results.hitOccurred ){
-						if( results.t>maxt ) {		// Check if maxt value surpassed
+						if( results.t>maxt ) {		
 							results.hitOccurred=false;
 							return;
 						}
@@ -582,7 +530,7 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 
 					RayCastTriangle( results, realEyePos, realViewNorm, data[idx+width+1].pos, data[idx+1].pos, data[idx+width].pos );
 					if( results.hitOccurred ){
-						if( results.t>maxt ) {		// Check if maxt value surpassed
+						if( results.t>maxt ) {		
 							results.hitOccurred=false;
 							return;
 						}
@@ -597,20 +545,19 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 						return;
 				}
 
-				// we didn't intersect -- so update the index
-				if( lasty<data[idx].maxy ) {	// in this case, we haven't updated xidx or zidx yet
+				if( lasty<data[idx].maxy ) {	
 					tval1 = ( data[idx].pos[0]-realEyePos[0] )/realViewNorm[0];
 					tval2 = ( data[idx].pos[2]-realEyePos[2] )/realViewNorm[2];
 
-					if( realViewNorm[2]==0 || ( realViewNorm[0]!=0 && tval1 < tval2 ) ){		// Hits right edge
+					if( realViewNorm[2]==0 || ( realViewNorm[0]!=0 && tval1 < tval2 ) ){		
 						xidx--;
 						tval=tval1;
-					} else {					// Hits bottom edge
+					} else {					
 						zidx--;
 						tval=tval2;
 					}
 
-					if( tval>maxt ) {		// Check if maxt value surpassed
+					if( tval>maxt ) {		
 						results.hitOccurred=false;
 						return;
 					}
@@ -627,10 +574,8 @@ void RayTester::RayCast( RayTestInfo &results, const TRTScalar *eyePos, const TR
 	results.hitOccurred = false;
 }
 
-
 void RayTester::RayCastTriangle( RayTestInfo &results, const TRTScalar *eyePos, const TRTScalar *viewNorm,
 									const TRTScalar *vert0, const TRTScalar *vert1, const TRTScalar *vert2 ) const {
-	// Code taken from http://www.acm.org/jgt/papers/MollerTrumbore97/code.html
 
 	#define EPSILON 0.000001
 	#define CROSS(dest,v1,v2) \
@@ -644,17 +589,14 @@ void RayTester::RayCastTriangle( RayTestInfo &results, const TRTScalar *eyePos, 
 			dest[2]=v1[2]-v2[2]; 
 
 	TRTScalar edge1[3], edge2[3], tvec[3], pvec[3], qvec[3];
-	TRTScalar det;//,inv_det;
+	TRTScalar det;
 	TRTScalar u, v;
 
-	/* find vectors for two edges sharing vert0 */
 	SUB(edge1, vert1, vert0);
 	SUB(edge2, vert2, vert0);
 
-	/* begin calculating determinant - also used to calculate U parameter */
 	CROSS(pvec, viewNorm, edge2);
 
-	/* if determinant is near zero, ray lies in plane of triangle */
 	det = DOT(edge1, pvec);
 
 	if (det < EPSILON) {
@@ -662,32 +604,21 @@ void RayTester::RayCastTriangle( RayTestInfo &results, const TRTScalar *eyePos, 
 		return;
 	}
 
-	/* calculate distance from vert0 to ray eyePosin */
 	SUB(tvec, eyePos, vert0);
 
-	/* calculate U parameter and test bounds */
 	u = DOT(tvec, pvec);
 	if (u < 0.0 || u > det) {
 		results.hitOccurred=false;
 		return;
 	}
 
-	/* prepare to test V parameter */
 	CROSS(qvec, tvec, edge1);
 
-	/* calculate V parameter and test bounds */
 	v = DOT(viewNorm, qvec);
 	if (v < 0.0 || u + v > det) {
 		results.hitOccurred=false;
 		return;
 	}
-
-	/* calculate t, scale parameters, ray intersects triangle */
-//	t = DOT(edge2, qvec);		// We don't need the uv coords, so this is commented out
-//	inv_det = 1.0 / det;
-//	t *= inv_det;
-//	u *= inv_det;
-//	v *= inv_det;
 
 	results.hitOccurred=true;
 	results.t = DOT(edge2, qvec) / det;
@@ -705,7 +636,6 @@ void RayTester::RayCastTriangle( RayTestInfo &results, const TRTScalar *eyePos, 
 
 }
 
-
 void RayTester::RectifyResults( RayTestInfo &results ) const {
 	#ifndef TRT_TRANSFORM_DATA
 		if( transformData ) {
@@ -718,7 +648,6 @@ void RayTester::RectifyResults( RayTestInfo &results ) const {
 		}
 	#endif
 }
-
 
 void RayTester::GetNormal( TRTScalar *r, const TRTScalar *u, const TRTScalar *v, const TRTScalar *w) const {
 	static TRTScalar vx,vy,vz,wx,wy,wz;
@@ -733,7 +662,6 @@ void RayTester::GetNormal( TRTScalar *r, const TRTScalar *u, const TRTScalar *v,
 	r[1]=vz*wx-wz*vx;
 	r[2]=vx*wy-wx*vy;
 }
-
 
 void RayTester::Normalize( TRTScalar *v ) const {
 	#ifdef TRT_DOUBLE_PRECISION

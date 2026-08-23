@@ -48,7 +48,7 @@ TEST(Vec2, DotCross) {
     Vec2 a(3.0f, 4.0f), b(-1.0f, 2.0f);
     glm::vec2 ga(3.0f, 4.0f), gb(-1.0f, 2.0f);
     EXPECT_NEAR(a.Dot(b), glm::dot(ga, gb), kEps);
-    // glm::vec2 has no cross(); reference value is the standard 2D determinant.
+
     EXPECT_NEAR(a.Cross(b), a.x * b.y - a.y * b.x, kEps);
 }
 

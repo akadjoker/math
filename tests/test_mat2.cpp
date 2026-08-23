@@ -77,7 +77,7 @@ TEST(Mat2, ScaleMatchesGlmScaleConstruction) {
 TEST(Mat2, SkewXShearsYAxisOnly) {
     float angle = Math::PI / 6.0f;
     Mat2 m = Mat2::SkewX(angle);
-    // skewX leaves (1,0) fixed and moves (0,1) to (tan(angle), 1).
+
     Vec2 ex = m * Vec2(1.0f, 0.0f);
     Vec2 ey = m * Vec2(0.0f, 1.0f);
     EXPECT_NEAR(ex.x, 1.0f, kEps);

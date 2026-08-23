@@ -1,28 +1,3 @@
-//========================================================================
-// GLFW 3.3 macOS - www.glfw.org
-//------------------------------------------------------------------------
-// Copyright (c) 2009-2016 Camilla Löwy <elmindreda@glfw.org>
-//
-// This software is provided 'as-is', without any express or implied
-// warranty. In no event will the authors be held liable for any damages
-// arising from the use of this software.
-//
-// Permission is granted to anyone to use this software for any purpose,
-// including commercial applications, and to alter it and redistribute it
-// freely, subject to the following restrictions:
-//
-// 1. The origin of this software must not be misrepresented; you must not
-//    claim that you wrote the original software. If you use this software
-//    in a product, an acknowledgment in the product documentation would
-//    be appreciated but is not required.
-//
-// 2. Altered source versions must be plainly marked as such, and must not
-//    be misrepresented as being the original software.
-//
-// 3. This notice may not be removed or altered from any source
-//    distribution.
-//
-//========================================================================
 
 #include <stdint.h>
 #include <dlfcn.h>
@@ -67,7 +42,6 @@ typedef VkResult (APIENTRY *PFN_vkCreateMacOSSurfaceMVK)(VkInstance,const VkMacO
 #define _GLFW_PLATFORM_MONITOR_STATE        _GLFWmonitorNS ns
 #define _GLFW_PLATFORM_CURSOR_STATE         _GLFWcursorNS  ns
 
-// HIToolbox.framework pointer typedefs
 #define kTISPropertyUnicodeKeyLayoutData _glfw.ns.tis.kPropertyUnicodeKeyLayoutData
 typedef TISInputSourceRef (*PFN_TISCopyCurrentKeyboardLayoutInputSource)(void);
 #define TISCopyCurrentKeyboardLayoutInputSource _glfw.ns.tis.CopyCurrentKeyboardLayoutInputSource
@@ -76,9 +50,6 @@ typedef void* (*PFN_TISGetInputSourceProperty)(TISInputSourceRef,CFStringRef);
 typedef UInt8 (*PFN_LMGetKbdType)(void);
 #define LMGetKbdType _glfw.ns.tis.GetKbdType
 
-
-// Cocoa-specific per-window data
-//
 typedef struct _GLFWwindowNS
 {
     id              object;
@@ -88,20 +59,14 @@ typedef struct _GLFWwindowNS
 
     GLFWbool        maximized;
 
-    // Cached window properties to filter out duplicate events
     int             width, height;
     int             fbWidth, fbHeight;
     float           xscale, yscale;
 
-    // The total sum of the distances the cursor has been warped
-    // since the last cursor motion event was processed
-    // This is kept to counteract Cocoa doing the same internally
     double          cursorWarpDeltaX, cursorWarpDeltaY;
 
 } _GLFWwindowNS;
 
-// Cocoa-specific global data
-//
 typedef struct _GLFWlibraryNS
 {
     CGEventSourceRef    eventSource;
@@ -118,9 +83,9 @@ typedef struct _GLFWlibraryNS
     short int           scancodes[GLFW_KEY_LAST + 1];
     char*               clipboardString;
     CGPoint             cascadePoint;
-    // Where to place the cursor when re-enabled
+
     double              restoreCursorPosX, restoreCursorPosY;
-    // The window whose disabled cursor mode is active
+
     _GLFWwindow*        disabledCursorWindow;
 
     struct {
@@ -133,8 +98,6 @@ typedef struct _GLFWlibraryNS
 
 } _GLFWlibraryNS;
 
-// Cocoa-specific per-monitor data
-//
 typedef struct _GLFWmonitorNS
 {
     CGDirectDisplayID   displayID;
@@ -144,26 +107,20 @@ typedef struct _GLFWmonitorNS
 
 } _GLFWmonitorNS;
 
-// Cocoa-specific per-cursor data
-//
 typedef struct _GLFWcursorNS
 {
     id              object;
 
 } _GLFWcursorNS;
 
-// Cocoa-specific global timer data
-//
 typedef struct _GLFWtimerNS
 {
     uint64_t        frequency;
 
 } _GLFWtimerNS;
 
-
 void _glfwInitTimerNS(void);
 
 void _glfwPollMonitorsNS(void);
 void _glfwSetVideoModeNS(_GLFWmonitor* monitor, const GLFWvidmode* desired);
 void _glfwRestoreVideoModeNS(_GLFWmonitor* monitor);
-

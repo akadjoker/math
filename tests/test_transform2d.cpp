@@ -19,9 +19,6 @@ static void ExpectVecNear(const Vec2& a, const Vec2& b, float eps = kEps) {
     EXPECT_NEAR(a.y, b.y, eps);
 }
 
-// glm's translate/rotate/scale helpers only exist for mat4 (3D API), so the
-// equivalent 2D homogeneous transform (translate * rotate * scale) is built
-// by hand here as the ground truth for TransformPoint.
 static glm::mat3 GlmTRS(glm::vec2 translation, float rotationRad, glm::vec2 scale) {
     float c = std::cos(rotationRad), s = std::sin(rotationRad);
     return glm::mat3(
@@ -77,7 +74,7 @@ TEST(Transform2D, TransformVectorIgnoresTranslation) {
 TEST(Transform2D, SkewXMovesYAxisOnlyBeforeRotation) {
     float skewX = Math::PI / 6.0f;
     Transform2D t = Transform2D::FromTRS(Vec2::Zero, 0.0f, Vec2::One, skewX, 0.0f);
-    // At zero rotation, skewX behaves exactly like Mat2::SkewX.
+
     Vec2 ex = t.TransformPoint(Vec2(1.0f, 0.0f));
     Vec2 ey = t.TransformPoint(Vec2(0.0f, 1.0f));
     ExpectVecNear(ex, glm::vec2(1.0f, 0.0f));
@@ -105,7 +102,7 @@ TEST(Transform2D, ComposeMatchesGlmMultiplication) {
     Vec2 p(1.0f, 1.0f);
     glm::vec3 expected = gComposed * glm::vec3(1.0f, 1.0f, 1.0f);
     ExpectVecNear(composed.TransformPoint(p), glm::vec2(expected));
-    // Composition should also match applying b then a in sequence.
+
     ExpectVecNear(composed.TransformPoint(p), a.TransformPoint(b.TransformPoint(p)));
 }
 
@@ -124,8 +121,6 @@ TEST(Transform2D, RotationAroundPivotKeepsPivotFixed) {
 
     ExpectVecNear(t.TransformPoint(pivot), glm::vec2(5.0f, 5.0f));
 
-    // A point one unit right of the pivot should end up one unit above it
-    // after a +90 degree rotation around that pivot.
     Vec2 p(6.0f, 5.0f);
     ExpectVecNear(t.TransformPoint(p), glm::vec2(5.0f, 6.0f));
 }
@@ -155,7 +150,6 @@ TEST(Transform2D, FromTRSWithPivotRotatesAroundPivotThenTranslates) {
     float angle = Math::PI / 2.0f;
     Transform2D t = Transform2D::FromTRS(translation, angle, Vec2::One, 0.0f, 0.0f, pivot);
 
-    // The pivot itself should land exactly at translation after the transform.
     ExpectVecNear(t.TransformPoint(pivot), glm::vec2(10.0f, 0.0f));
 }
 

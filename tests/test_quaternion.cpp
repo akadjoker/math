@@ -16,9 +16,6 @@ static void ExpectVec3Near(const Vec3& a, const glm::vec3& b, float eps = kEps) 
     EXPECT_NEAR(a.z, b.z, eps);
 }
 
-// glm::quat's constructor takes (w,x,y,z) — opposite order from Quaternion's
-// (x,y,z,w) — so every comparison here is written component-by-name, never
-// by raw memory layout.
 static ::testing::AssertionResult QuatNear(const Quaternion& a, const glm::quat& b, float eps = kEps) {
     if (std::fabs(a.x - b.x) < eps && std::fabs(a.y - b.y) < eps &&
         std::fabs(a.z - b.z) < eps && std::fabs(a.w - b.w) < eps)
@@ -30,7 +27,7 @@ static ::testing::AssertionResult QuatNear(const Quaternion& a, const glm::quat&
 
 TEST(Quaternion, IdentityMatchesGlm) {
     Quaternion q;
-    glm::quat g(1.0f, 0.0f, 0.0f, 0.0f); // (w,x,y,z)
+    glm::quat g(1.0f, 0.0f, 0.0f, 0.0f); 
     EXPECT_TRUE(QuatNear(q, g));
 }
 
@@ -71,7 +68,7 @@ TEST(Quaternion, MultiplyComposesRotationsLikeGlm) {
 
 TEST(Quaternion, NormalizeConjugateInverse) {
     Quaternion q(1.0f, 2.0f, 3.0f, 4.0f);
-    glm::quat g(4.0f, 1.0f, 2.0f, 3.0f); // (w,x,y,z)
+    glm::quat g(4.0f, 1.0f, 2.0f, 3.0f); 
 
     EXPECT_TRUE(QuatNear(q.Normalized(), glm::normalize(g)));
     EXPECT_TRUE(QuatNear(q.Conjugate(), glm::conjugate(g)));
@@ -102,8 +99,6 @@ TEST(Quaternion, FromMat3RoundTripsThroughToMat3) {
     Mat3 m = original.ToMat3();
     Quaternion recovered = Quaternion::FromMat3(m);
 
-    // Quaternions have double cover (q and -q are the same rotation), so
-    // compare rotation behavior rather than raw components.
     Vec3 v(0.5f, -0.3f, 0.9f);
     Vec3 a = original * v;
     Vec3 b = recovered * v;
@@ -166,7 +161,7 @@ TEST(Quaternion, LerpStaysNormalized) {
 TEST(Quaternion, LookRotationIsInternallyConsistentWithToMat3) {
     Vec3 forward(0.0f, 0.0f, 1.0f), up(0.0f, 1.0f, 0.0f);
     Quaternion q = Quaternion::LookRotation(forward, up);
-    // Rotating the canonical forward axis by q should reproduce `forward`.
+
     Vec3 rotatedForward = q * Vec3(0.0f, 0.0f, 1.0f);
     ExpectVec3Near(rotatedForward, glm::vec3(0.0f, 0.0f, 1.0f), 1e-3f);
 }

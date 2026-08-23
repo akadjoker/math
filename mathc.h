@@ -161,8 +161,6 @@ namespace Math
     Vec3 operator*(float scalar, const Vec3 &v);
     std::ostream &operator<<(std::ostream &os, const Vec3 &v);
 
-    // 16-byte aligned so the implementation can load/store it as a single
-    // SIMD register (SSE2/NEON/wasm SIMD128 via compiler vector extensions).
     struct alignas(16) Vec4
     {
         union
@@ -234,7 +232,6 @@ namespace Math
     Vec4 operator*(float scalar, const Vec4 &v);
     std::ostream &operator<<(std::ostream &os, const Vec4 &v);
 
-    // Column-major, matches glm::mat2 memory layout: m[0] is column 0.
     struct Mat2
     {
         Vec2 col0, col1;
@@ -291,8 +288,7 @@ namespace Math
 
         Vec2 TransformPoint(const Vec2 &p) const;
         Vec2 TransformVector(const Vec2 &v) const;
-        // Transforms a whole vertex buffer (a quad, a polygon's points, a
-        // sprite's corners...) in one call. Safe to call with out == in.
+
         void TransformPoints(const Vec2 *in, Vec2 *out, int count) const;
 
         Transform2D operator*(const Transform2D &other) const;
@@ -302,8 +298,7 @@ namespace Math
 
         Transform2D Inverse() const;
         Transform2D InverseSafe() const;
-        // Fast inverse for translation+rotation only (no scale/skew): uses
-        // transpose instead of a general matrix inverse.
+
         Transform2D RigidInverse() const;
 
         static Transform2D Identity();
@@ -311,20 +306,17 @@ namespace Math
         static Transform2D Rotation(float angleRad);
         static Transform2D ScaleBy(const Vec2 &s);
         static Transform2D Rigid(const Vec2 &translation, float rotationRad);
-        // Rotate/scale around an arbitrary point instead of the local origin
-        // — pivot stays fixed, everything else turns/grows around it.
+
         static Transform2D RotationAround(const Vec2 &pivot, float angleRad);
         static Transform2D ScaleAround(const Vec2 &pivot, const Vec2 &scale);
-        // Compose order applied to a point: Scale, then SkewX, then SkewY,
-        // then Rotation, all around pivot, then Translation.
+
         static Transform2D FromTRS(const Vec2 &translation, float rotationRad, const Vec2 &scale,
                                     float skewXRad, float skewYRad, const Vec2 &pivot = Vec2::Zero);
     };
 
     std::ostream &operator<<(std::ostream &os, const Transform2D &t);
-#endif // MATHC_NO_EXTRA
+#endif 
 
-    // Column-major, matches glm::mat3 memory layout: m[0] is column 0.
     struct Mat3
     {
         Vec3 col0, col1, col2;
@@ -334,7 +326,7 @@ namespace Math
         Mat3(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22);
         Mat3(const Vec3 &col0, const Vec3 &col1, const Vec3 &col2);
 #ifndef MATHC_NO_EXTRA
-        // Embeds a 2D affine transform as a 3x3 homogeneous matrix.
+
         explicit Mat3(const Transform2D &t);
 #endif
 
@@ -357,9 +349,8 @@ namespace Math
         Mat3 Inverse() const;
         Mat3 InverseSafe() const;
 
-        // Treats this as a 2D homogeneous transform: p is lifted to (p, 1).
         Vec2 TransformPoint2D(const Vec2 &p) const;
-        // Same, but as (v, 0) — ignores translation, for directions/normals.
+
         Vec2 TransformVector2D(const Vec2 &v) const;
 
         static Mat3 Identity();
@@ -372,8 +363,6 @@ namespace Math
     Mat3 operator*(float scalar, const Mat3 &m);
     std::ostream &operator<<(std::ostream &os, const Mat3 &m);
 
-    // Column-major, matches glm::mat4 memory layout: m[0] is column 0.
-    // Columns are Vec4, so this benefits from the same SIMD path they use.
     struct alignas(16) Mat4
     {
         Vec4 col0, col1, col2, col3;
@@ -383,7 +372,7 @@ namespace Math
         Mat4(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
              float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33);
         Mat4(const Vec4 &col0, const Vec4 &col1, const Vec4 &col2, const Vec4 &col3);
-        // Embeds a 3x3 rotation/scale with zero translation.
+
         explicit Mat4(const Mat3 &upperLeft);
         Mat4(const Mat3 &upperLeft, const Vec3 &translation);
 
@@ -404,18 +393,16 @@ namespace Math
         Mat4 Transposed() const;
         float Determinant() const;
         Mat4 Inverse() const;
-        // Fast path for translation+rotation+scale (no projective part): uses
-        // Mat3::Inverse on the upper-left block instead of a general 4x4 solve.
+
         Mat4 InverseAffine() const;
 
         Mat3 UpperLeft3x3() const;
         Vec3 GetTranslation() const;
 
-        // (p, 1), no perspective divide — correct for affine transforms.
         Vec3 TransformPoint(const Vec3 &p) const;
-        // (p, 1), divides by w — for projection matrices.
+
         Vec3 TransformPointPerspective(const Vec3 &p) const;
-        // (v, 0) — direction/normal, ignores translation.
+
         Vec3 TransformVector(const Vec3 &v) const;
 
         static Mat4 Identity();
@@ -426,7 +413,7 @@ namespace Math
         static Mat4 RotationZ(float angleRad);
 
         static Mat4 LookAt(const Vec3 &eye, const Vec3 &center, const Vec3 &up);
-        // Right-handed, depth range [-1, 1] — matches glm's defaults.
+
         static Mat4 Perspective(float fovyRad, float aspect, float near, float far);
         static Mat4 Ortho(float left, float right, float bottom, float top, float near, float far);
     };
@@ -434,10 +421,6 @@ namespace Math
     Mat4 operator*(float scalar, const Mat4 &m);
     std::ostream &operator<<(std::ostream &os, const Mat4 &m);
 
-    // Hamilton convention: (a*b) applied to a vector rotates by b first, then
-    // a — same composition order as Mat3/Mat4 multiplication.
-    // 16-byte aligned, same rationale as Vec4: lets the implementation use a
-    // single SIMD register for the elementwise ops.
     struct alignas(16) Quaternion
     {
         union
@@ -482,19 +465,17 @@ namespace Math
 
         static Quaternion Identity();
         static Quaternion FromAxisAngle(const Vec3 &axis, float angleRad);
-        // Intrinsic rotation order X then Y then Z (pitch, yaw, roll).
+
         static Quaternion FromEulerAngles(float pitchX, float yawY, float rollZ);
         static Quaternion FromMat3(const Mat3 &m);
-        // Shortest-arc rotation that maps `from` onto `to` (both assumed unit length).
+
         static Quaternion FromTo(const Vec3 &from, const Vec3 &to);
         static Quaternion LookRotation(const Vec3 &forward, const Vec3 &up);
 
         static float Dot(const Quaternion &a, const Quaternion &b);
-        // Normalized linear interpolation — cheaper than Slerp, fine for
-        // small angular steps between consecutive animation frames.
+
         static Quaternion Lerp(const Quaternion &a, const Quaternion &b, float t);
-        // Constant angular velocity interpolation — the correct choice for
-        // blending between two distinct poses (large angular differences).
+
         static Quaternion Slerp(const Quaternion &a, const Quaternion &b, float t);
     };
 
@@ -517,8 +498,6 @@ namespace Math
 
     std::ostream &operator<<(std::ostream &os, const Ray &r);
 
-    // normal.Dot(p) + d == 0 for every point p on the plane; DistanceToPoint
-    // is signed, positive on the side the normal points to.
     struct Plane
     {
         Vec3 normal;
@@ -533,7 +512,6 @@ namespace Math
         Vec3 ClosestPoint(const Vec3 &point) const;
         Plane Normalized() const;
 
-        // t such that ray.PointAt(t) lies on the plane; false if parallel.
         bool IntersectRay(const Ray &ray, float &outT) const;
 
         static Plane FromPoints(const Vec3 &a, const Vec3 &b, const Vec3 &c);
@@ -541,7 +519,6 @@ namespace Math
 
     std::ostream &operator<<(std::ostream &os, const Plane &p);
 
-    // Axis-aligned bounding box.
     struct Box
     {
         Vec3 min, max;
@@ -550,8 +527,8 @@ namespace Math
         Box(const Vec3 &min, const Vec3 &max);
 
         Vec3 Center() const;
-        Vec3 Extents() const; // half-size
-        Vec3 Size() const;    // full size
+        Vec3 Extents() const; 
+        Vec3 Size() const;    
 
         bool Contains(const Vec3 &point) const;
         bool Intersects(const Box &other) const;
@@ -559,17 +536,10 @@ namespace Math
         Box Expanded(const Vec3 &point) const;
         Box Expanded(float amount) const;
 
-        // Slab method; both t's are valid only if it returns true and
-        // outTMax >= 0 (the box may be behind the ray origin otherwise).
         bool IntersectRay(const Ray &ray, float &outTMin, float &outTMax) const;
 
-        // Recomputes a new axis-aligned box tightly enclosing this one's 8
-        // corners after applying m — not just min/max transformed directly.
         Box Transformed(const Mat4 &m) const;
 
-        // 0=(min,min,min),
-        // 1=(min,max,min), 2=(min,min,max), 3=(min,max,max), 4=(max,min,min),
-        // 5=(max,max,min), 6=(max,min,max), 7=(max,max,max).
         void GetCorners(Vec3 outCorners[8]) const;
 
         static Box FromCenterExtents(const Vec3 &center, const Vec3 &extents);
@@ -579,7 +549,6 @@ namespace Math
 
     std::ostream &operator<<(std::ostream &os, const Box &b);
 
-    // 6 planes (left, right, bottom, top, near, far), normals pointing inward.
     struct Frustum
     {
         Plane planes[6];
@@ -588,15 +557,14 @@ namespace Math
 
         Frustum();
 
-        // Gribb/Hartmann extraction from a combined view-projection matrix.
         static Frustum FromViewProjection(const Mat4 &viewProj);
 
         bool ContainsPoint(const Vec3 &point) const;
         bool IntersectsSphere(const Vec3 &center, float radius) const;
         bool IntersectsBox(const Box &box) const;
     };
-#endif // MATHC_NO_EXTRA
+#endif 
 
-} // namespace Math
+} 
 
-#endif // MATHC_INCLUDE_MATHC_H
+#endif 

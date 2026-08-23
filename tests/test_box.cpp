@@ -21,7 +21,7 @@ TEST(Box, CenterExtentsSize) {
 TEST(Box, Contains) {
     Box b(Vec3(0.0f), Vec3(10.0f));
     EXPECT_TRUE(b.Contains(Vec3(5.0f, 5.0f, 5.0f)));
-    EXPECT_TRUE(b.Contains(Vec3(0.0f, 0.0f, 0.0f))); // boundary inclusive
+    EXPECT_TRUE(b.Contains(Vec3(0.0f, 0.0f, 0.0f))); 
     EXPECT_TRUE(b.Contains(Vec3(10.0f, 10.0f, 10.0f)));
     EXPECT_FALSE(b.Contains(Vec3(11.0f, 5.0f, 5.0f)));
     EXPECT_FALSE(b.Contains(Vec3(5.0f, -1.0f, 5.0f)));
@@ -30,7 +30,7 @@ TEST(Box, Contains) {
 TEST(Box, Intersects) {
     Box a(Vec3(0.0f), Vec3(5.0f));
     Box overlapping(Vec3(3.0f), Vec3(8.0f));
-    Box touching(Vec3(5.0f), Vec3(10.0f)); // shares a face
+    Box touching(Vec3(5.0f), Vec3(10.0f)); 
     Box separate(Vec3(6.0f), Vec3(10.0f));
 
     EXPECT_TRUE(a.Intersects(overlapping));
@@ -91,7 +91,6 @@ TEST(Box, GetCornersMatchesIrrlichtOrdering) {
     EXPECT_TRUE(corners[6] == Vec3(1, 0, 3));
     EXPECT_TRUE(corners[7] == Vec3(1, 2, 3));
 
-    // Every corner must lie on the box's boundary.
     for (int i = 0; i < 8; i++) {
         EXPECT_TRUE(b.Contains(corners[i]));
     }
@@ -102,13 +101,13 @@ TEST(Box, IntersectRayHitsFrontFace) {
     Ray r(Vec3(0.0f, 0.0f, -5.0f), Vec3(0.0f, 0.0f, 1.0f));
     float tmin, tmax;
     ASSERT_TRUE(b.IntersectRay(r, tmin, tmax));
-    EXPECT_NEAR(tmin, 4.0f, kEps); // hits z=-1 face at distance 4
-    EXPECT_NEAR(tmax, 6.0f, kEps); // exits z=+1 face at distance 6
+    EXPECT_NEAR(tmin, 4.0f, kEps); 
+    EXPECT_NEAR(tmax, 6.0f, kEps); 
 }
 
 TEST(Box, IntersectRayMissesEntirely) {
     Box b(Vec3(-1.0f), Vec3(1.0f));
-    Ray r(Vec3(10.0f, 10.0f, -5.0f), Vec3(0.0f, 0.0f, 1.0f)); // parallel, offset away
+    Ray r(Vec3(10.0f, 10.0f, -5.0f), Vec3(0.0f, 0.0f, 1.0f)); 
     float tmin, tmax;
     EXPECT_FALSE(b.IntersectRay(r, tmin, tmax));
 }
@@ -118,21 +117,19 @@ TEST(Box, IntersectRayOriginInsideBox) {
     Ray r(Vec3(0.0f, 0.0f, 0.0f), Vec3(1.0f, 0.0f, 0.0f));
     float tmin, tmax;
     ASSERT_TRUE(b.IntersectRay(r, tmin, tmax));
-    EXPECT_LT(tmin, 0.0f);  // exit point behind the origin along -x
+    EXPECT_LT(tmin, 0.0f);  
     EXPECT_NEAR(tmax, 1.0f, kEps);
 }
 
 TEST(Box, TransformedEnclosesRotatedCorners) {
     Box b(Vec3(-1.0f, -1.0f, -1.0f), Vec3(1.0f, 1.0f, 1.0f));
-    Mat4 m = Mat4::RotationY(Math::PI / 4.0f); // 45 degrees: corners spread out on X/Z
+    Mat4 m = Mat4::RotationY(Math::PI / 4.0f); 
     Box t = b.Transformed(m);
 
-    // A unit cube rotated 45 degrees around Y has its XZ extent grow to sqrt(2).
     EXPECT_NEAR(t.max.x, std::sqrt(2.0f), kEps);
     EXPECT_NEAR(t.max.z, std::sqrt(2.0f), kEps);
-    EXPECT_NEAR(t.max.y, 1.0f, kEps); // Y unaffected by a Y-axis rotation
+    EXPECT_NEAR(t.max.y, 1.0f, kEps); 
 
-    // Every original corner, once transformed, must land inside the result.
     Vec3 corner = m.TransformPoint(Vec3(1.0f, 1.0f, 1.0f));
     EXPECT_TRUE(t.Contains(corner));
 }

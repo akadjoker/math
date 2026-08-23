@@ -1,12 +1,3 @@
-// mathc.h -- single-header math library (generated, do not edit by hand)
-// Source: mathc.h + mathc.cpp in the mathc repo, run tools/amalgamate.py to regenerate.
-//
-// Usage (stb-style): in exactly ONE .cpp file of your project, do
-//     #define MATHC_IMPLEMENTATION
-//     #include "mathc.h"
-// Every other file just does #include "mathc.h" with no define.
-// Optionally #define MATHC_NO_EXTRA before including to drop
-// Transform2D/Ray/Plane/Box/Frustum from the build entirely.
 
 #ifndef MATHC_INCLUDE_MATHC_H
 #define MATHC_INCLUDE_MATHC_H
@@ -171,8 +162,6 @@ namespace Math
     Vec3 operator*(float scalar, const Vec3 &v);
     std::ostream &operator<<(std::ostream &os, const Vec3 &v);
 
-    // 16-byte aligned so the implementation can load/store it as a single
-    // SIMD register (SSE2/NEON/wasm SIMD128 via compiler vector extensions).
     struct alignas(16) Vec4
     {
         union
@@ -244,7 +233,6 @@ namespace Math
     Vec4 operator*(float scalar, const Vec4 &v);
     std::ostream &operator<<(std::ostream &os, const Vec4 &v);
 
-    // Column-major, matches glm::mat2 memory layout: m[0] is column 0.
     struct Mat2
     {
         Vec2 col0, col1;
@@ -301,8 +289,7 @@ namespace Math
 
         Vec2 TransformPoint(const Vec2 &p) const;
         Vec2 TransformVector(const Vec2 &v) const;
-        // Transforms a whole vertex buffer (a quad, a polygon's points, a
-        // sprite's corners...) in one call. Safe to call with out == in.
+
         void TransformPoints(const Vec2 *in, Vec2 *out, int count) const;
 
         Transform2D operator*(const Transform2D &other) const;
@@ -312,8 +299,7 @@ namespace Math
 
         Transform2D Inverse() const;
         Transform2D InverseSafe() const;
-        // Fast inverse for translation+rotation only (no scale/skew): uses
-        // transpose instead of a general matrix inverse.
+
         Transform2D RigidInverse() const;
 
         static Transform2D Identity();
@@ -321,20 +307,17 @@ namespace Math
         static Transform2D Rotation(float angleRad);
         static Transform2D ScaleBy(const Vec2 &s);
         static Transform2D Rigid(const Vec2 &translation, float rotationRad);
-        // Rotate/scale around an arbitrary point instead of the local origin
-        // — pivot stays fixed, everything else turns/grows around it.
+
         static Transform2D RotationAround(const Vec2 &pivot, float angleRad);
         static Transform2D ScaleAround(const Vec2 &pivot, const Vec2 &scale);
-        // Compose order applied to a point: Scale, then SkewX, then SkewY,
-        // then Rotation, all around pivot, then Translation.
+
         static Transform2D FromTRS(const Vec2 &translation, float rotationRad, const Vec2 &scale,
                                     float skewXRad, float skewYRad, const Vec2 &pivot = Vec2::Zero);
     };
 
     std::ostream &operator<<(std::ostream &os, const Transform2D &t);
-#endif // MATHC_NO_EXTRA
+#endif 
 
-    // Column-major, matches glm::mat3 memory layout: m[0] is column 0.
     struct Mat3
     {
         Vec3 col0, col1, col2;
@@ -344,7 +327,7 @@ namespace Math
         Mat3(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22);
         Mat3(const Vec3 &col0, const Vec3 &col1, const Vec3 &col2);
 #ifndef MATHC_NO_EXTRA
-        // Embeds a 2D affine transform as a 3x3 homogeneous matrix.
+
         explicit Mat3(const Transform2D &t);
 #endif
 
@@ -367,9 +350,8 @@ namespace Math
         Mat3 Inverse() const;
         Mat3 InverseSafe() const;
 
-        // Treats this as a 2D homogeneous transform: p is lifted to (p, 1).
         Vec2 TransformPoint2D(const Vec2 &p) const;
-        // Same, but as (v, 0) — ignores translation, for directions/normals.
+
         Vec2 TransformVector2D(const Vec2 &v) const;
 
         static Mat3 Identity();
@@ -382,8 +364,6 @@ namespace Math
     Mat3 operator*(float scalar, const Mat3 &m);
     std::ostream &operator<<(std::ostream &os, const Mat3 &m);
 
-    // Column-major, matches glm::mat4 memory layout: m[0] is column 0.
-    // Columns are Vec4, so this benefits from the same SIMD path they use.
     struct alignas(16) Mat4
     {
         Vec4 col0, col1, col2, col3;
@@ -393,7 +373,7 @@ namespace Math
         Mat4(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
              float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33);
         Mat4(const Vec4 &col0, const Vec4 &col1, const Vec4 &col2, const Vec4 &col3);
-        // Embeds a 3x3 rotation/scale with zero translation.
+
         explicit Mat4(const Mat3 &upperLeft);
         Mat4(const Mat3 &upperLeft, const Vec3 &translation);
 
@@ -414,18 +394,16 @@ namespace Math
         Mat4 Transposed() const;
         float Determinant() const;
         Mat4 Inverse() const;
-        // Fast path for translation+rotation+scale (no projective part): uses
-        // Mat3::Inverse on the upper-left block instead of a general 4x4 solve.
+
         Mat4 InverseAffine() const;
 
         Mat3 UpperLeft3x3() const;
         Vec3 GetTranslation() const;
 
-        // (p, 1), no perspective divide — correct for affine transforms.
         Vec3 TransformPoint(const Vec3 &p) const;
-        // (p, 1), divides by w — for projection matrices.
+
         Vec3 TransformPointPerspective(const Vec3 &p) const;
-        // (v, 0) — direction/normal, ignores translation.
+
         Vec3 TransformVector(const Vec3 &v) const;
 
         static Mat4 Identity();
@@ -436,7 +414,7 @@ namespace Math
         static Mat4 RotationZ(float angleRad);
 
         static Mat4 LookAt(const Vec3 &eye, const Vec3 &center, const Vec3 &up);
-        // Right-handed, depth range [-1, 1] — matches glm's defaults.
+
         static Mat4 Perspective(float fovyRad, float aspect, float near, float far);
         static Mat4 Ortho(float left, float right, float bottom, float top, float near, float far);
     };
@@ -444,10 +422,6 @@ namespace Math
     Mat4 operator*(float scalar, const Mat4 &m);
     std::ostream &operator<<(std::ostream &os, const Mat4 &m);
 
-    // Hamilton convention: (a*b) applied to a vector rotates by b first, then
-    // a — same composition order as Mat3/Mat4 multiplication.
-    // 16-byte aligned, same rationale as Vec4: lets the implementation use a
-    // single SIMD register for the elementwise ops.
     struct alignas(16) Quaternion
     {
         union
@@ -492,19 +466,17 @@ namespace Math
 
         static Quaternion Identity();
         static Quaternion FromAxisAngle(const Vec3 &axis, float angleRad);
-        // Intrinsic rotation order X then Y then Z (pitch, yaw, roll).
+
         static Quaternion FromEulerAngles(float pitchX, float yawY, float rollZ);
         static Quaternion FromMat3(const Mat3 &m);
-        // Shortest-arc rotation that maps `from` onto `to` (both assumed unit length).
+
         static Quaternion FromTo(const Vec3 &from, const Vec3 &to);
         static Quaternion LookRotation(const Vec3 &forward, const Vec3 &up);
 
         static float Dot(const Quaternion &a, const Quaternion &b);
-        // Normalized linear interpolation — cheaper than Slerp, fine for
-        // small angular steps between consecutive animation frames.
+
         static Quaternion Lerp(const Quaternion &a, const Quaternion &b, float t);
-        // Constant angular velocity interpolation — the correct choice for
-        // blending between two distinct poses (large angular differences).
+
         static Quaternion Slerp(const Quaternion &a, const Quaternion &b, float t);
     };
 
@@ -527,8 +499,6 @@ namespace Math
 
     std::ostream &operator<<(std::ostream &os, const Ray &r);
 
-    // normal.Dot(p) + d == 0 for every point p on the plane; DistanceToPoint
-    // is signed, positive on the side the normal points to.
     struct Plane
     {
         Vec3 normal;
@@ -543,7 +513,6 @@ namespace Math
         Vec3 ClosestPoint(const Vec3 &point) const;
         Plane Normalized() const;
 
-        // t such that ray.PointAt(t) lies on the plane; false if parallel.
         bool IntersectRay(const Ray &ray, float &outT) const;
 
         static Plane FromPoints(const Vec3 &a, const Vec3 &b, const Vec3 &c);
@@ -551,7 +520,6 @@ namespace Math
 
     std::ostream &operator<<(std::ostream &os, const Plane &p);
 
-    // Axis-aligned bounding box.
     struct Box
     {
         Vec3 min, max;
@@ -560,8 +528,8 @@ namespace Math
         Box(const Vec3 &min, const Vec3 &max);
 
         Vec3 Center() const;
-        Vec3 Extents() const; // half-size
-        Vec3 Size() const;    // full size
+        Vec3 Extents() const; 
+        Vec3 Size() const;    
 
         bool Contains(const Vec3 &point) const;
         bool Intersects(const Box &other) const;
@@ -569,17 +537,10 @@ namespace Math
         Box Expanded(const Vec3 &point) const;
         Box Expanded(float amount) const;
 
-        // Slab method; both t's are valid only if it returns true and
-        // outTMax >= 0 (the box may be behind the ray origin otherwise).
         bool IntersectRay(const Ray &ray, float &outTMin, float &outTMax) const;
 
-        // Recomputes a new axis-aligned box tightly enclosing this one's 8
-        // corners after applying m — not just min/max transformed directly.
         Box Transformed(const Mat4 &m) const;
 
-        // 0=(min,min,min),
-        // 1=(min,max,min), 2=(min,min,max), 3=(min,max,max), 4=(max,min,min),
-        // 5=(max,max,min), 6=(max,min,max), 7=(max,max,max).
         void GetCorners(Vec3 outCorners[8]) const;
 
         static Box FromCenterExtents(const Vec3 &center, const Vec3 &extents);
@@ -589,7 +550,6 @@ namespace Math
 
     std::ostream &operator<<(std::ostream &os, const Box &b);
 
-    // 6 planes (left, right, bottom, top, near, far), normals pointing inward.
     struct Frustum
     {
         Plane planes[6];
@@ -598,16 +558,15 @@ namespace Math
 
         Frustum();
 
-        // Gribb/Hartmann extraction from a combined view-projection matrix.
         static Frustum FromViewProjection(const Mat4 &viewProj);
 
         bool ContainsPoint(const Vec3 &point) const;
         bool IntersectsSphere(const Vec3 &center, float radius) const;
         bool IntersectsBox(const Box &box) const;
     };
-#endif // MATHC_NO_EXTRA
+#endif 
 
-} // namespace Math
+} 
 
 #ifdef MATHC_IMPLEMENTATION
 
@@ -616,9 +575,6 @@ namespace Math
 #include <cstring>
 #include <limits>
 
-// GCC/Clang vector extensions: the same source lowers to SSE2 on x86/x64,
-// NEON on ARM, and wasm SIMD128 on Emscripten (with -msimd128) — no
-// per-platform intrinsics needed. Falls back to plain scalar code elsewhere.
 #if defined(__GNUC__) || defined(__clang__)
 #define MATHC_SIMD 1
 typedef float SimdF4 __attribute__((vector_size(16)));
@@ -632,8 +588,7 @@ namespace Math
 #if MATHC_SIMD
     namespace
     {
-        // memcpy instead of union/reinterpret_cast type punning: strict-aliasing
-        // safe, and compilers fold a fixed-size memcpy into a single load/store.
+
         inline SimdF4 LoadV4(const Vec4 &v)
         {
             SimdF4 r;
@@ -722,18 +677,12 @@ namespace Math
     float Vec2::LengthSquared() const { return x * x + y * y; }
     float Vec2::Length() const { return std::sqrt(LengthSquared()); }
 
-    // Matches glm::normalize exactly: no zero-vector guard. NaN/Inf on a zero
-    // vector, same as glm — caller is responsible for the vector being non-zero.
     Vec2 Vec2::Normalized() const
     {
         float inv = 1.0f / std::sqrt(LengthSquared());
         return Vec2(x * inv, y * inv);
     }
 
-    // std::max as a branchless floor: for a zero vector this yields inv from
-    // sqrt(EPSILON^2), multiplied by x=y=0, so the result is still (0,0) —
-    // same semantics as an explicit early-out, without the branch killing
-    // auto-vectorization in hot loops.
     Vec2 Vec2::NormalizedSafe() const
     {
         float lenSq = std::max(LengthSquared(), EPSILON * EPSILON);
@@ -746,7 +695,6 @@ namespace Math
 
     float Vec2::Dot(const Vec2 &o) const { return x * o.x + y * o.y; }
 
-    // 2D cross product is a scalar: the z component of the equivalent 3D cross.
     float Vec2::Cross(const Vec2 &o) const { return x * o.y - y * o.x; }
 
     float Vec2::Angle() const { return std::atan2(y, x); }
@@ -883,7 +831,6 @@ namespace Math
 
     float Vec3::Dot(const Vec3 &o) const { return x * o.x + y * o.y + z * o.z; }
 
-    // Right-handed: X cross Y = Z.
     Vec3 Vec3::Cross(const Vec3 &o) const
     {
         return Vec3(y * o.z - z * o.y, z * o.x - x * o.z, x * o.y - y * o.x);
@@ -1011,9 +958,6 @@ namespace Math
     void Vec4::Normalize() { *this = Normalized(); }
     void Vec4::NormalizeSafe() { *this = NormalizedSafe(); }
 
-    // A single horizontal sum over 4 lanes rarely beats scalar code — SIMD
-    // pays off batching many vectors, not isolated dot/length calls — so
-    // this stays plain scalar rather than forcing a shuffle+add sequence.
     float Vec4::Dot(const Vec4 &o) const { return x * o.x + y * o.y + z * o.z + w * o.w; }
 
     Vec2 Vec4::xy() const { return Vec2(x, y); }
@@ -1054,8 +998,6 @@ namespace Math
     Mat2::Mat2(float m00, float m01, float m10, float m11) : col0(m00, m01), col1(m10, m11) {}
     Mat2::Mat2(const Vec2 &c0, const Vec2 &c1) : col0(c0), col1(c1) {}
 
-    // col0/col1 are adjacent Vec2 members with no padding between them, so
-    // indexing off &col0 is safe and matches how glm indexes its columns.
     Vec2 &Mat2::operator[](int col) { return (&col0)[col]; }
     const Vec2 &Mat2::operator[](int col) const { return (&col0)[col]; }
     float *Mat2::Data() { return &col0.x; }
@@ -1099,7 +1041,7 @@ namespace Math
     {
         float detSign = Determinant() < 0.0f ? -1.0f : 1.0f;
         float d = col0.Normalized().Dot(col1.Normalized() * detSign);
-        d = std::max(-1.0f, std::min(1.0f, d)); // guard acos domain against float rounding
+        d = std::max(-1.0f, std::min(1.0f, d)); 
         return std::acos(d) - PI * 0.5f;
     }
 
@@ -1114,9 +1056,8 @@ namespace Math
         return Mat2(c, s, -s, c);
     }
 
-    // CSS-style shear: X axis fixed, Y axis leans by angleRad.
     Mat2 Mat2::SkewX(float angleRad) { return Mat2(1.0f, 0.0f, std::tan(angleRad), 1.0f); }
-    // CSS-style shear: Y axis fixed, X axis leans by angleRad.
+
     Mat2 Mat2::SkewY(float angleRad) { return Mat2(1.0f, std::tan(angleRad), 0.0f, 1.0f); }
 
     Mat2 Mat2::FromScaleRotationSkew(const Vec2 &scale, float rotationRad, float skewRad)
@@ -1180,7 +1121,6 @@ namespace Math
         return Transform2D(Mat2::Rotation(rotationRad), translation);
     }
 
-    // T(p) = pivot + basis*(p - pivot) = basis*p + (pivot - basis*pivot).
     Transform2D Transform2D::RotationAround(const Vec2 &pivot, float angleRad)
     {
         Mat2 r = Mat2::Rotation(angleRad);
@@ -1193,9 +1133,6 @@ namespace Math
         return Transform2D(s, pivot - s * pivot);
     }
 
-    // T(p) = translation + basis*(p - pivot), so T(pivot) == translation
-    // exactly: the pivot (e.g. a sprite's local center) lands on the
-    // requested world position, with rotation/scale/skew centered on it.
     Transform2D Transform2D::FromTRS(const Vec2 &translation, float rotationRad, const Vec2 &scale,
                                       float skewXRad, float skewYRad, const Vec2 &pivot)
     {
@@ -1207,7 +1144,7 @@ namespace Math
     {
         return os << "{basis: " << t.basis << ", origin: " << t.origin << "}";
     }
-#endif // MATHC_NO_EXTRA
+#endif 
 
     Mat3::Mat3() : col0(1.0f, 0.0f, 0.0f), col1(0.0f, 1.0f, 0.0f), col2(0.0f, 0.0f, 1.0f) {}
     Mat3::Mat3(float scalar) : col0(scalar, 0.0f, 0.0f), col1(0.0f, scalar, 0.0f), col2(0.0f, 0.0f, scalar) {}
@@ -1222,7 +1159,7 @@ namespace Math
           col2(t.origin.x, t.origin.y, 1.0f)
     {
     }
-#endif // MATHC_NO_EXTRA
+#endif 
 
     Vec3 &Mat3::operator[](int col) { return (&col0)[col]; }
     const Vec3 &Mat3::operator[](int col) const { return (&col0)[col]; }
@@ -1243,12 +1180,8 @@ namespace Math
         return Mat3(col0.x, col1.x, col2.x, col0.y, col1.y, col2.y, col0.z, col1.z, col2.z);
     }
 
-    // Scalar triple product: det = col0 . (col1 x col2).
     float Mat3::Determinant() const { return col0.Dot(col1.Cross(col2)); }
 
-    // Cramer's rule via cross products: if A = [a|b|c], A^-1 has rows
-    // (b x c), (c x a), (a x b) each scaled by 1/det — built here column by
-    // column since Mat3's constructor takes row-major scalar arguments.
     Mat3 Mat3::Inverse() const
     {
         Vec3 r0 = col1.Cross(col2);
@@ -1355,8 +1288,6 @@ namespace Math
                      col0.z, col1.z, col2.z, col3.z, col0.w, col1.w, col2.w, col3.w);
     }
 
-    // First-row cofactor expansion — the same three 3x3 minors reused (and
-    // recomputed) inside Inverse() below.
     float Mat4::Determinant() const
     {
         const float *m = Data();
@@ -1371,9 +1302,6 @@ namespace Math
         return m[0] * c0 + m[1] * c1 + m[2] * c2 + m[3] * c3;
     }
 
-    // Classic 16-term cofactor expansion (the same formula used by MESA/GLU).
-    // Kept as plain scalar code operating on Data() rather than symbolic
-    // 3x3-minor helpers, since that's what's actually verified against glm.
     Mat4 Mat4::Inverse() const
     {
         const float *m = Data();
@@ -1447,7 +1375,6 @@ namespace Math
     Mat4 Mat4::RotationY(float angleRad) { return Mat4(Mat3::RotationY(angleRad)); }
     Mat4 Mat4::RotationZ(float angleRad) { return Mat4(Mat3::RotationZ(angleRad)); }
 
-    // Right-handed view matrix, matches glm::lookAt exactly.
     Mat4 Mat4::LookAt(const Vec3 &eye, const Vec3 &center, const Vec3 &up)
     {
         Vec3 f = (center - eye).Normalized();
@@ -1461,8 +1388,6 @@ namespace Math
             -s.Dot(eye), -u.Dot(eye), f.Dot(eye), 1.0f);
     }
 
-    // Right-handed, depth range [-1, 1] — matches glm::perspective's default
-    // (GLM_FORCE_DEPTH_ZERO_TO_ONE and GLM_FORCE_LEFT_HANDED both unset).
     Mat4 Mat4::Perspective(float fovyRad, float aspect, float nearZ, float farZ)
     {
         float tanHalfFovy = std::tan(fovyRad * 0.5f);
@@ -1475,7 +1400,6 @@ namespace Math
         return r;
     }
 
-    // Right-handed, depth range [-1, 1] — matches glm::ortho's default.
     Mat4 Mat4::Ortho(float left, float right, float bottom, float top, float nearZ, float farZ)
     {
         Mat4 r;
@@ -1501,8 +1425,7 @@ namespace Math
     const float &Quaternion::operator[](int index) const { return v[index]; }
 
 #if MATHC_SIMD
-    // Reuses Vec4's load/store — Quaternion has the identical (x,y,z,w),
-    // 16-byte-aligned layout, so the same SimdF4 round-trip applies.
+
     static inline SimdF4 LoadQ(const Quaternion &q)
     {
         SimdF4 r;
@@ -1524,7 +1447,6 @@ namespace Math
     Quaternion Quaternion::operator*(float s) const { return Quaternion(x * s, y * s, z * s, w * s); }
 #endif
 
-    // Hamilton product: (a*b)*v rotates by b first, then a.
     Quaternion Quaternion::operator*(const Quaternion &o) const
     {
         return Quaternion(
@@ -1534,7 +1456,6 @@ namespace Math
             w * o.w - x * o.x - y * o.y - z * o.z);
     }
 
-    // v + 2w(q_xyz x v) + 2(q_xyz x (q_xyz x v)) — cheaper than q*(v,0)*q^-1.
     Vec3 Quaternion::operator*(const Vec3 &v) const
     {
         Vec3 qv(x, y, z);
@@ -1590,8 +1511,6 @@ namespace Math
 
     Quaternion Quaternion::Identity() { return Quaternion(); }
 
-    // Matches glm::angleAxis: assumes axis is already unit length — caller's
-    // responsibility, same tradeoff as Normalized() vs NormalizedSafe().
     Quaternion Quaternion::FromAxisAngle(const Vec3 &axis, float angleRad)
     {
         float half = angleRad * 0.5f;
@@ -1599,8 +1518,6 @@ namespace Math
         return Quaternion(axis.x * s, axis.y * s, axis.z * s, std::cos(half));
     }
 
-    // Matches glm::quat(vec3 eulerAngles) exactly: intrinsic X (pitch) then
-    // Y (yaw) then Z (roll).
     Quaternion Quaternion::FromEulerAngles(float pitchX, float yawY, float rollZ)
     {
         float cx = std::cos(pitchX * 0.5f), sx = std::sin(pitchX * 0.5f);
@@ -1614,8 +1531,6 @@ namespace Math
             cx * cy * cz + sx * sy * sz);
     }
 
-    // Shepperd's method, transcribed from glm::quat_cast (which returns
-    // (w,x,y,z) — reordered here to this class's (x,y,z,w) constructor).
     Quaternion Quaternion::FromMat3(const Mat3 &m)
     {
         float m00 = m.col0.x, m01 = m.col0.y, m02 = m.col0.z;
@@ -1711,7 +1626,7 @@ namespace Math
         float theta = theta0 * t;
         float sinTheta0 = std::sin(theta0);
         float sinTheta = std::sin(theta);
-        float ratio = sinTheta / sinTheta0; // computed once, reused below
+        float ratio = sinTheta / sinTheta0; 
         float s0 = std::cos(theta) - d * ratio;
         float s1 = ratio;
         return a * s0 + bb * s1;
@@ -1793,8 +1708,6 @@ namespace Math
     Box Box::Expanded(const Vec3 &p) const { return Box(Vec3::Min(min, p), Vec3::Max(max, p)); }
     Box Box::Expanded(float amount) const { return Box(min - Vec3(amount), max + Vec3(amount)); }
 
-    // Slab method (Kay-Kajiya): intersect the ray against each axis-aligned
-    // pair of planes and shrink [tMin, tMax] to their overlap.
     bool Box::IntersectRay(const Ray &ray, float &outTMin, float &outTMax) const
     {
         float tmin = std::numeric_limits<float>::lowest();
@@ -1829,7 +1742,6 @@ namespace Math
         return result;
     }
 
-    // Same ordering as Irrlicht's aabbox3d::getEdges.
     void Box::GetCorners(Vec3 outCorners[8]) const
     {
         outCorners[0] = Vec3(min.x, min.y, min.z);
@@ -1859,8 +1771,6 @@ namespace Math
 
     Frustum::Frustum() {}
 
-    // Gribb/Hartmann extraction, valid for the [-1,1] depth convention used
-    // by Mat4::Perspective/Ortho (same as glm's uncustomized defaults).
     Frustum Frustum::FromViewProjection(const Mat4 &m)
     {
         Vec4 row0(m.col0.x, m.col1.x, m.col2.x, m.col3.x);
@@ -1869,9 +1779,9 @@ namespace Math
         Vec4 row3(m.col0.w, m.col1.w, m.col2.w, m.col3.w);
 
         Vec4 raw[6] = {
-            row3 + row0, row3 - row0, // left, right
-            row3 + row1, row3 - row1, // bottom, top
-            row3 + row2, row3 - row2  // near, far
+            row3 + row0, row3 - row0, 
+            row3 + row1, row3 - row1, 
+            row3 + row2, row3 - row2  
         };
 
         Frustum f;
@@ -1913,10 +1823,10 @@ namespace Math
         }
         return true;
     }
-#endif // MATHC_NO_EXTRA
+#endif 
 
-} // namespace Math
+} 
 
-#endif // MATHC_IMPLEMENTATION
+#endif 
 
-#endif // MATHC_INCLUDE_MATHC_H
+#endif 

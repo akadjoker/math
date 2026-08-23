@@ -111,7 +111,6 @@ TEST(Mat3, FromTransform2DMatchesHomogeneousGlm) {
     EXPECT_NEAR(result.x, gp.x, kEps);
     EXPECT_NEAR(result.y, gp.y, kEps);
 
-    // Also matches Transform2D::TransformPoint directly.
     Vec2 direct = t.TransformPoint(p);
     EXPECT_NEAR(result.x, direct.x, kEps);
     EXPECT_NEAR(result.y, direct.y, kEps);

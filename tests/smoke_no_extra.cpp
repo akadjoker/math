@@ -1,6 +1,4 @@
-// Proves MATHC_NO_EXTRA actually removes code, not just hides it behind an
-// unused #ifdef: this file only touches core types, and is compiled with
-// MATHC_NO_EXTRA defined so Transform2D/Ray/Plane/Box/Frustum never exist.
+
 #define MATHC_NO_EXTRA
 #include "../mathc.h"
 #include "../mathc.cpp"

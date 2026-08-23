@@ -1,15 +1,4 @@
-/*
- * Nuklear - v1.32.0 - public domain
- * no warrenty implied; use at your own risk.
- * authored from 2015-2017 by Micha Mettke
- */
-/*
- * ==============================================================
- *
- *                              API
- *
- * ===============================================================
- */
+
 #ifndef NK_GLFW_GL2_H_
 #define NK_GLFW_GL2_H_
 
@@ -32,13 +21,6 @@ NK_API void                 nk_gflw3_scroll_callback(GLFWwindow *win, double xof
 
 #endif
 
-/*
- * ==============================================================
- *
- *                          IMPLEMENTATION
- *
- * ===============================================================
- */
 #ifdef NK_GLFW_GL2_IMPLEMENTATION
 
 #ifndef NK_GLFW_TEXT_MAX
@@ -94,7 +76,7 @@ nk_glfw3_device_upload_atlas(const void *image, int width, int height)
 NK_API void
 nk_glfw3_render(enum nk_anti_aliasing AA)
 {
-    /* setup global state */
+
     struct nk_glfw_device *dev = &glfw.ogl;
     glPushAttrib(GL_ENABLE_BIT|GL_COLOR_BUFFER_BIT|GL_TRANSFORM_BIT);
     glDisable(GL_CULL_FACE);
@@ -104,7 +86,6 @@ nk_glfw3_render(enum nk_anti_aliasing AA)
     glEnable(GL_TEXTURE_2D);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    /* setup viewport/project */
     glViewport(0,0,(GLsizei)glfw.display_width,(GLsizei)glfw.display_height);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -123,12 +104,10 @@ nk_glfw3_render(enum nk_anti_aliasing AA)
         size_t vt = offsetof(struct nk_glfw_vertex, uv);
         size_t vc = offsetof(struct nk_glfw_vertex, col);
 
-        /* convert from command queue into draw list and draw to screen */
         const struct nk_draw_command *cmd;
         const nk_draw_index *offset = NULL;
         struct nk_buffer vbuf, ebuf;
 
-        /* fill convert configuration */
         struct nk_convert_config config;
         static const struct nk_draw_vertex_layout_element vertex_layout[] = {
             {NK_VERTEX_POSITION, NK_FORMAT_FLOAT, NK_OFFSETOF(struct nk_glfw_vertex, position)},
@@ -148,18 +127,15 @@ nk_glfw3_render(enum nk_anti_aliasing AA)
         config.shape_AA = AA;
         config.line_AA = AA;
 
-        /* convert shapes into vertexes */
         nk_buffer_init_default(&vbuf);
         nk_buffer_init_default(&ebuf);
         nk_convert(&glfw.ctx, &dev->cmds, &vbuf, &ebuf, &config);
 
-        /* setup vertex buffer pointer */
         {const void *vertices = nk_buffer_memory_const(&vbuf);
         glVertexPointer(2, GL_FLOAT, vs, (const void*)((const nk_byte*)vertices + vp));
         glTexCoordPointer(2, GL_FLOAT, vs, (const void*)((const nk_byte*)vertices + vt));
         glColorPointer(4, GL_UNSIGNED_BYTE, vs, (const void*)((const nk_byte*)vertices + vc));}
 
-        /* iterate over and execute each draw command */
         offset = (const nk_draw_index*)nk_buffer_memory_const(&ebuf);
         nk_draw_foreach(cmd, &glfw.ctx, &dev->cmds)
         {
@@ -178,7 +154,6 @@ nk_glfw3_render(enum nk_anti_aliasing AA)
         nk_buffer_free(&ebuf);
     }
 
-    /* default OpenGL state */
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);
@@ -308,7 +283,6 @@ nk_glfw3_new_frame(void)
     for (i = 0; i < glfw.text_len; ++i)
         nk_input_unicode(ctx, glfw.text[i]);
 
-    /* optional grabbing behavior */
     if (ctx->input.mouse.grab)
         glfwSetInputMode(glfw.win, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     else if (ctx->input.mouse.ungrab)

@@ -275,7 +275,6 @@ static inline void mat4x4_invert(mat4x4 T, mat4x4 M)
 	c[4] = M[2][1]*M[3][3] - M[3][1]*M[2][3];
 	c[5] = M[2][2]*M[3][3] - M[3][2]*M[2][3];
 
-	/* Assumes it is invertible */
 	idet = 1.0f/( s[0]*c[5]-s[1]*c[4]+s[2]*c[3]+s[3]*c[2]-s[4]*c[1]+s[5]*c[0] );
 
 	T[0][0] = ( M[1][1] * c[5] - M[1][2] * c[4] + M[1][3] * c[3]) * idet;
@@ -356,8 +355,7 @@ static inline void mat4x4_ortho(mat4x4 M, float l, float r, float b, float t, fl
 }
 static inline void mat4x4_perspective(mat4x4 m, float y_fov, float aspect, float n, float f)
 {
-	/* NOTE: Degrees are an unhandy unit to work with.
-	 * linmath.h uses radians for everything! */
+
 	float const a = 1.f / (float) tan(y_fov / 2.f);
 
 	m[0][0] = a / aspect;
@@ -382,12 +380,7 @@ static inline void mat4x4_perspective(mat4x4 m, float y_fov, float aspect, float
 }
 static inline void mat4x4_look_at(mat4x4 m, vec3 eye, vec3 center, vec3 up)
 {
-	/* Adapted from Android's OpenGL Matrix.java.                        */
-	/* See the OpenGL GLUT documentation for gluLookAt for a description */
-	/* of the algorithm. We implement it in a straightforward way:       */
 
-	/* TODO: The negation of of can be spared by swapping the order of
-	 *       operands in the following cross products in the right way. */
 	vec3 f;
 	vec3 s;
 	vec3 t;
@@ -483,11 +476,7 @@ static inline void quat_rotate(quat r, float angle, vec3 axis) {
 #define quat_norm vec4_norm
 static inline void quat_mul_vec3(vec3 r, quat q, vec3 v)
 {
-/*
- * Method by Fabian 'ryg' Giessen (of Farbrausch)
-t = 2 * cross(q.xyz, v)
-v' = v + q.w * t + cross(q.xyz, t)
- */
+
 	vec3 t = {q[0], q[1], q[2]};
 	vec3 u = {q[0], q[1], q[2]};
 
@@ -532,8 +521,7 @@ static inline void mat4x4_from_quat(mat4x4 M, quat q)
 
 static inline void mat4x4o_mul_quat(mat4x4 R, mat4x4 M, quat q)
 {
-/*  XXX: The way this is written only works for othogonal matrices. */
-/* TODO: Take care of non-orthogonal case. */
+
 	quat_mul_vec3(R[0], q, M[0]);
 	quat_mul_vec3(R[1], q, M[1]);
 	quat_mul_vec3(R[2], q, M[2]);

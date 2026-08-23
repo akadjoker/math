@@ -20,8 +20,7 @@ TEST(Ray, FromPointsNormalizesDirection) {
     EXPECT_NEAR(r.direction.x, 0.6f, kEps);
     EXPECT_NEAR(r.direction.y, 0.8f, kEps);
 
-    // Moving along the ray by the original distance lands back on b.
-    Vec3 landed = r.PointAt(5.0f); // |(3,4,0)| == 5
+    Vec3 landed = r.PointAt(5.0f); 
     EXPECT_NEAR(landed.x, 3.0f, kEps);
     EXPECT_NEAR(landed.y, 4.0f, kEps);
 }

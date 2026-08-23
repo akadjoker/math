@@ -1,28 +1,3 @@
-//========================================================================
-// GLFW 3.3 Wayland - www.glfw.org
-//------------------------------------------------------------------------
-// Copyright (c) 2014 Jonas Ådahl <jadahl@gmail.com>
-//
-// This software is provided 'as-is', without any express or implied
-// warranty. In no event will the authors be held liable for any damages
-// arising from the use of this software.
-//
-// Permission is granted to anyone to use this software for any purpose,
-// including commercial applications, and to alter it and redistribute it
-// freely, subject to the following restrictions:
-//
-// 1. The origin of this software must not be misrepresented; you must not
-//    claim that you wrote the original software. If you use this software
-//    in a product, an acknowledgment in the product documentation would
-//    be appreciated but is not required.
-//
-// 2. Altered source versions must be plainly marked as such, and must not
-//    be misrepresented as being the original software.
-//
-// 3. This notice may not be removed or altered from any source
-//    distribution.
-//
-//========================================================================
 
 #include <wayland-client.h>
 #include <xkbcommon/xkbcommon.h>
@@ -168,8 +143,6 @@ typedef struct _GLFWdecorationWayland
 
 } _GLFWdecorationWayland;
 
-// Wayland-specific per-window data
-//
 typedef struct _GLFWwindowWayland
 {
     int                         width, height;
@@ -192,8 +165,6 @@ typedef struct _GLFWwindowWayland
 
     char*                       title;
 
-    // We need to track the monitors the window spans on to calculate the
-    // optimal scaling factor.
     int                         scale;
     _GLFWmonitor**              monitors;
     int                         monitorsCount;
@@ -206,7 +177,6 @@ typedef struct _GLFWwindowWayland
 
     struct zwp_idle_inhibitor_v1*          idleInhibitor;
 
-    // This is a hack to prevent auto-iconification on creation.
     GLFWbool                    justCreated;
 
     struct {
@@ -217,8 +187,6 @@ typedef struct _GLFWwindowWayland
 
 } _GLFWwindowWayland;
 
-// Wayland-specific global data
-//
 typedef struct _GLFWlibraryWayland
 {
     struct wl_display*          display;
@@ -314,8 +282,6 @@ typedef struct _GLFWlibraryWayland
 
 } _GLFWlibraryWayland;
 
-// Wayland-specific per-monitor data
-//
 typedef struct _GLFWmonitorWayland
 {
     struct wl_output*           output;
@@ -328,8 +294,6 @@ typedef struct _GLFWmonitorWayland
 
 } _GLFWmonitorWayland;
 
-// Wayland-specific per-cursor data
-//
 typedef struct _GLFWcursorWayland
 {
     struct wl_cursor_image*     image;
@@ -338,6 +302,4 @@ typedef struct _GLFWcursorWayland
     int                         xhot, yhot;
 } _GLFWcursorWayland;
 
-
 void _glfwAddOutputWayland(uint32_t name, uint32_t version);
-

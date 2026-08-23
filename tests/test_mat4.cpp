@@ -81,8 +81,7 @@ TEST(Mat4, TransposeAndDeterminant) {
 }
 
 TEST(Mat4, InverseMatchesGlmForGeneralMatrix) {
-    // A non-affine matrix (last row isn't (0,0,0,1)) to exercise the general
-    // 16-term cofactor formula, not just the affine fast path.
+
     Mat4 m(1, 2, 3, 4, 0, 1, 4, 2, 5, 6, 0, 3, 1, 0, 2, 1);
     glm::mat4 g(1, 2, 3, 4, 0, 1, 4, 2, 5, 6, 0, 3, 1, 0, 2, 1);
     EXPECT_TRUE(MatNear(m.Inverse(), glm::inverse(g)));
@@ -153,8 +152,7 @@ TEST(Mat4, PerspectiveProjectsPointsMatchingGlm) {
 }
 
 TEST(Mat4, ChainedMultiplyMatchesGlmSkeletonHierarchy) {
-    // A 4-bone chain (hip -> spine -> shoulder -> arm): each bone's world
-    // transform is parent world * local, exactly like skeletal animation.
+
     Mat4 localHip = Mat4::Translation(Vec3(0, 1, 0)) * Mat4::RotationY(0.3f);
     Mat4 localSpine = Mat4::Translation(Vec3(0, 0.5f, 0)) * Mat4::RotationX(0.15f);
     Mat4 localShoulder = Mat4::Translation(Vec3(0.3f, 0.4f, 0)) * Mat4::RotationZ(-0.4f);

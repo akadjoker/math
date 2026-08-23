@@ -28,11 +28,6 @@ int main() {
 
     std::printf("mathc::Quaternion vs glm::quat  (%d iterations per test)\n\n", N);
 
-    // Multiply + rotate a vector: the per-bone cost in a skinning update.
-    // DoNotOptimize is called every iteration, not just after the loop — with
-    // only a post-loop barrier the compiler can still prove much of the loop
-    // body is redundant even though `acc` is accumulated, and the benchmark
-    // silently measures something else.
     Time("mathc multiply+rotate", N, [](int n) {
         Vec3 acc(0.0f, 0.0f, 0.0f);
         for (int i = 0; i < n; i++) {
@@ -55,7 +50,6 @@ int main() {
         }
     });
 
-    // Slerp: the actual per-frame cost of blending between two animation poses.
     const int NS = 5'000'000;
     Quaternion qa = Quaternion::FromAxisAngle(Vec3(0, 1, 0), 0.0f);
     Quaternion qb = Quaternion::FromAxisAngle(Vec3(0, 1, 0), Math::PI * 0.9f);
@@ -67,9 +61,8 @@ int main() {
         for (int i = 0; i < n; i++) {
             float t = (i % 1000) * 0.001f;
             acc = Quaternion::Slerp(qa, qb, t);
-            DoNotOptimize(acc); // must be inside the loop, or the compiler
-                                 // proves only the last iteration is observable
-                                 // and elides the rest as dead code.
+            DoNotOptimize(acc); 
+
         }
     });
 
