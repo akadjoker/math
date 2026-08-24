@@ -1087,7 +1087,13 @@ namespace Math
     }
 
     float Plane::DistanceToPoint(const Vec3 &p) const { return normal.Dot(p) + d; }
-    Vec3 Plane::ClosestPoint(const Vec3 &p) const { return p - normal * DistanceToPoint(p); }
+    Vec3 Plane::ClosestPoint(const Vec3 &p) const
+    {
+        // The plane normal is not required to be unit length. Divide by its
+        // squared length so this is the orthogonal projection for a scaled
+        // plane equation too.
+        return p - normal * (DistanceToPoint(p) / normal.LengthSquared());
+    }
 
     Plane Plane::Normalized() const
     {

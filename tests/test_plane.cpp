@@ -42,6 +42,15 @@ TEST(Plane, ClosestPointProjectsOntoPlane) {
     EXPECT_NEAR(p.DistanceToPoint(closest), 0.0f, kEps);
 }
 
+TEST(Plane, ClosestPointSupportsUnnormalizedNormal) {
+    // 3x - 6 = 0 is x = 2. The projection must be independent of the
+    // arbitrary scale (3) applied to the plane equation.
+    Plane p(Vec3(3.0f, 0.0f, 0.0f), -6.0f);
+    Vec3 closest = p.ClosestPoint(Vec3(8.0f, 4.0f, -1.0f));
+    EXPECT_TRUE(closest == Vec3(2.0f, 4.0f, -1.0f));
+    EXPECT_NEAR(p.DistanceToPoint(closest), 0.0f, kEps);
+}
+
 TEST(Plane, NormalizedPreservesGeometryWithUnscaledNormal) {
     Plane p(Vec3(0.0f, 2.0f, 0.0f), -10.0f); 
     Plane n = p.Normalized();
