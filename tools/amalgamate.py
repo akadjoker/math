@@ -30,11 +30,20 @@ def main():
 
     cpp_text = re.sub(r'^#include "mathc\.h"\n', '', cpp_text, count=1, flags=re.MULTILINE)
 
-    marker = "#endif // MATHC_INCLUDE_MATHC_H"
-    if marker not in header_text:
+    # The source header may use either a bare #endif or the documented
+    # comment. Match the final include-guard terminator rather than relying
+    # on its exact whitespace/comment formatting.
+    marker_match = re.search(
+        r"^#endif(?:[ \t]+//[ \t]*MATHC_INCLUDE_MATHC_H)?[ \t]*(?:\n)?\Z",
+        header_text,
+        flags=re.MULTILINE,
+    )
+    if marker_match is None:
         print("ERROR: end-of-header marker not found in mathc.h", file=sys.stderr)
         sys.exit(1)
-    decl_part, _, tail = header_text.partition(marker)
+    decl_part = header_text[:marker_match.start()]
+    tail = header_text[marker_match.end():]
+    marker = "#endif // MATHC_INCLUDE_MATHC_H"
 
     impl_block = (
         "#ifdef MATHC_IMPLEMENTATION\n\n"

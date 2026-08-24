@@ -1,3 +1,12 @@
+// mathc.h -- single-header math library (generated, do not edit by hand)
+// Source: mathc.h + mathc.cpp in the mathc repo, run tools/amalgamate.py to regenerate.
+//
+// Usage (stb-style): in exactly ONE .cpp file of your project, do
+//     #define MATHC_IMPLEMENTATION
+//     #include "mathc.h"
+// Every other file just does #include "mathc.h" with no define.
+// Optionally #define MATHC_NO_EXTRA before including to drop
+// Transform2D/Ray/Plane/Box/Frustum from the build entirely.
 
 #ifndef MATHC_INCLUDE_MATHC_H
 #define MATHC_INCLUDE_MATHC_H
@@ -1833,6 +1842,6 @@ namespace Math
 
 } 
 
-#endif 
+#endif // MATHC_IMPLEMENTATION
 
-#endif 
+#endif // MATHC_INCLUDE_MATHC_H
