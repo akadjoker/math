@@ -19,34 +19,37 @@ target_include_directories(mathc PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 find_path(GLM_INCLUDE_DIR glm/glm.hpp PATHS /usr/local/include /usr/include)
 if(NOT GLM_INCLUDE_DIR)
-    message(WARNING "glm/glm.hpp not found, tests and benchmarks are skipped")
+    message(WARNING "glm/glm.hpp not found; the GoogleTest suite and benchmarks are skipped")
 endif()
 
-if(MATHC_BUILD_TESTS AND GLM_INCLUDE_DIR AND NOT EMSCRIPTEN)
-    include(FetchContent)
-    FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG v1.15.2
-    )
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-    set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
-
+if(MATHC_BUILD_TESTS AND NOT EMSCRIPTEN)
     enable_testing()
-    include(GoogleTest)
 
-    add_executable(mathc_tests tests/test_vec2.cpp tests/test_vec3.cpp tests/test_vec4.cpp tests/test_mat2.cpp tests/test_transform2d.cpp tests/test_mat3.cpp tests/test_mat4.cpp tests/test_quaternion.cpp tests/test_ray.cpp tests/test_plane.cpp tests/test_box.cpp tests/test_frustum.cpp)
-    target_link_libraries(mathc_tests PRIVATE mathc gtest_main)
-    target_include_directories(mathc_tests PRIVATE ${GLM_INCLUDE_DIR})
-    gtest_discover_tests(mathc_tests)
-
-    # Proves MATHC_NO_EXTRA genuinely removes Transform2D/Ray/Plane/Box/Frustum
-    # (not just hides them behind an unused #ifdef) by compiling and running
-    # a core-only build. Self-contained: includes mathc.cpp directly, so it
-    # doesn't need a second copy of the mathc library target.
+    # Validates the distributable single-header build with the optional
+    # higher-level types excluded.  This is independent of GoogleTest/GLM.
     add_executable(mathc_smoke_no_extra tests/smoke_no_extra.cpp)
+    add_test(NAME mathc_smoke_no_extra COMMAND mathc_smoke_no_extra)
+
+    if(GLM_INCLUDE_DIR)
+        include(FetchContent)
+        FetchContent_Declare(
+            googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG v1.15.2
+        )
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+        set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+        FetchContent_MakeAvailable(googletest)
+
+        include(GoogleTest)
+
+        add_executable(mathc_tests tests/test_vec2.cpp tests/test_vec3.cpp tests/test_vec4.cpp tests/test_mat2.cpp tests/test_transform2d.cpp tests/test_mat3.cpp tests/test_mat4.cpp tests/test_quaternion.cpp tests/test_ray.cpp tests/test_plane.cpp tests/test_box.cpp tests/test_frustum.cpp tests/test_randomized_glm.cpp)
+        target_link_libraries(mathc_tests PRIVATE mathc gtest_main)
+        target_include_directories(mathc_tests PRIVATE ${GLM_INCLUDE_DIR})
+        gtest_discover_tests(mathc_tests)
+
+    endif()
 endif()
 
 if(MATHC_BUILD_BENCH AND GLM_INCLUDE_DIR)
@@ -71,6 +74,10 @@ if(MATHC_BUILD_BENCH AND GLM_INCLUDE_DIR)
     target_include_directories(bench_quaternion PRIVATE ${GLM_INCLUDE_DIR})
 
     if(MATHC_NATIVE_ARCH AND NOT EMSCRIPTEN AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
+        # Compile both sides of the comparison for the local CPU.  mathc is
+        # normally kept portable; this applies only when benchmark targets
+        # are requested.
+        target_compile_options(mathc PRIVATE -march=native)
         target_compile_options(bench_vec2 PRIVATE -march=native)
         target_compile_options(bench_vec3 PRIVATE -march=native)
         target_compile_options(bench_vec4 PRIVATE -march=native)

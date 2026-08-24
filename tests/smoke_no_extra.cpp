@@ -1,7 +1,8 @@
-
+// Proves the distributable header works with MATHC_NO_EXTRA, which removes
+// Transform2D/Ray/Plane/Box/Frustum from both its declarations and definitions.
 #define MATHC_NO_EXTRA
-#include "../mathc.h"
-#include "../mathc.cpp"
+#define MATHC_IMPLEMENTATION
+#include "../dist/mathc.h"
 #include <cstdio>
 
 using namespace Math;
