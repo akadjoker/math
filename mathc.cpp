@@ -1260,4 +1260,20 @@ namespace Math
     }
 #endif 
 
+    Vec3::Vec3(const Vec4 &v) : x(v.x), y(v.y), z(v.z) {}
+    Mat3::Mat3(const Mat4 &m) : col0(m[0].xyz()), col1(m[1].xyz()), col2(m[2].xyz()) {}
+    Quaternion::Quaternion(float w, const Vec3 &xyz) : x(xyz.x), y(xyz.y), z(xyz.z), w(w) {}
+
+    Mat2 &Mat2::operator+=(const Mat2 &o) { col0 += o.col0; col1 += o.col1; return *this; }
+    Mat2 &Mat2::operator-=(const Mat2 &o) { col0 -= o.col0; col1 -= o.col1; return *this; }
+    Mat2 &Mat2::operator*=(float s) { col0 *= s; col1 *= s; return *this; }
+    Mat3 &Mat3::operator+=(const Mat3 &o) { col0 += o.col0; col1 += o.col1; col2 += o.col2; return *this; }
+    Mat3 &Mat3::operator-=(const Mat3 &o) { col0 -= o.col0; col1 -= o.col1; col2 -= o.col2; return *this; }
+    Mat3 &Mat3::operator*=(float s) { col0 *= s; col1 *= s; col2 *= s; return *this; }
+    Mat4 &Mat4::operator+=(const Mat4 &o) { col0 += o.col0; col1 += o.col1; col2 += o.col2; col3 += o.col3; return *this; }
+    Mat4 &Mat4::operator-=(const Mat4 &o) { col0 -= o.col0; col1 -= o.col1; col2 -= o.col2; col3 -= o.col3; return *this; }
+    Mat4 &Mat4::operator*=(float s) { col0 *= s; col1 *= s; col2 *= s; col3 *= s; return *this; }
+    Quaternion &Quaternion::operator+=(const Quaternion &o) { x += o.x; y += o.y; z += o.z; w += o.w; return *this; }
+    Quaternion &Quaternion::operator-=(const Quaternion &o) { x -= o.x; y -= o.y; z -= o.z; w -= o.w; return *this; }
+
 } 

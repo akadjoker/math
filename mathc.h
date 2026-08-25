@@ -85,6 +85,8 @@ namespace Math
     Vec2 operator*(float scalar, const Vec2 &v);
     std::ostream &operator<<(std::ostream &os, const Vec2 &v);
 
+    struct Vec4;
+
     struct Vec3
     {
         union
@@ -100,6 +102,7 @@ namespace Math
         Vec3(float x, float y, float z);
         explicit Vec3(float scalar);
         Vec3(const Vec2 &xy, float z);
+        Vec3(const Vec4 &v);
 
         float &operator[](int index);
         const float &operator[](int index) const;
@@ -252,6 +255,10 @@ namespace Math
         Mat2 operator*(float scalar) const;
         Vec2 operator*(const Vec2 &v) const;
 
+        Mat2 &operator+=(const Mat2 &other);
+        Mat2 &operator-=(const Mat2 &other);
+        Mat2 &operator*=(float scalar);
+
         bool operator==(const Mat2 &other) const;
         bool operator!=(const Mat2 &other) const;
 
@@ -317,6 +324,8 @@ namespace Math
     std::ostream &operator<<(std::ostream &os, const Transform2D &t);
 #endif 
 
+    struct Mat4;
+
     struct Mat3
     {
         Vec3 col0, col1, col2;
@@ -325,6 +334,7 @@ namespace Math
         explicit Mat3(float scalar);
         Mat3(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22);
         Mat3(const Vec3 &col0, const Vec3 &col1, const Vec3 &col2);
+        Mat3(const Mat4 &m);
 #ifndef MATHC_NO_EXTRA
 
         explicit Mat3(const Transform2D &t);
@@ -340,6 +350,10 @@ namespace Math
         Mat3 operator*(const Mat3 &other) const;
         Mat3 operator*(float scalar) const;
         Vec3 operator*(const Vec3 &v) const;
+
+        Mat3 &operator+=(const Mat3 &other);
+        Mat3 &operator-=(const Mat3 &other);
+        Mat3 &operator*=(float scalar);
 
         bool operator==(const Mat3 &other) const;
         bool operator!=(const Mat3 &other) const;
@@ -386,6 +400,10 @@ namespace Math
         Mat4 operator*(const Mat4 &other) const;
         Mat4 operator*(float scalar) const;
         Vec4 operator*(const Vec4 &v) const;
+
+        Mat4 &operator+=(const Mat4 &other);
+        Mat4 &operator-=(const Mat4 &other);
+        Mat4 &operator*=(float scalar);
 
         bool operator==(const Mat4 &other) const;
         bool operator!=(const Mat4 &other) const;
@@ -434,6 +452,7 @@ namespace Math
 
         Quaternion();
         Quaternion(float x, float y, float z, float w);
+        Quaternion(float w, const Vec3 &xyz);
 
         float &operator[](int index);
         const float &operator[](int index) const;
@@ -443,6 +462,9 @@ namespace Math
         Quaternion operator*(const Quaternion &other) const;
         Quaternion operator*(float scalar) const;
         Vec3 operator*(const Vec3 &v) const;
+
+        Quaternion &operator+=(const Quaternion &other);
+        Quaternion &operator-=(const Quaternion &other);
 
         Quaternion operator-() const;
 
