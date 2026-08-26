@@ -83,6 +83,10 @@ namespace Math
     };
 
     Vec2 operator*(float scalar, const Vec2 &v);
+    inline Vec2 operator+(const Vec2 &v, float scalar) { return v + Vec2(scalar); }
+    inline Vec2 operator+(float scalar, const Vec2 &v) { return Vec2(scalar) + v; }
+    inline Vec2 operator-(const Vec2 &v, float scalar) { return v - Vec2(scalar); }
+    inline Vec2 operator-(float scalar, const Vec2 &v) { return Vec2(scalar) - v; }
     std::ostream &operator<<(std::ostream &os, const Vec2 &v);
 
     struct Vec4;
@@ -94,6 +98,10 @@ namespace Math
             struct
             {
                 float x, y, z;
+            };
+            struct
+            {
+                float r, g, b;
             };
             float v[3];
         };
@@ -162,6 +170,10 @@ namespace Math
     };
 
     Vec3 operator*(float scalar, const Vec3 &v);
+    inline Vec3 operator+(const Vec3 &v, float scalar) { return v + Vec3(scalar); }
+    inline Vec3 operator+(float scalar, const Vec3 &v) { return Vec3(scalar) + v; }
+    inline Vec3 operator-(const Vec3 &v, float scalar) { return v - Vec3(scalar); }
+    inline Vec3 operator-(float scalar, const Vec3 &v) { return Vec3(scalar) - v; }
     std::ostream &operator<<(std::ostream &os, const Vec3 &v);
 
     struct alignas(16) Vec4
@@ -171,6 +183,10 @@ namespace Math
             struct
             {
                 float x, y, z, w;
+            };
+            struct
+            {
+                float r, g, b, a;
             };
             float v[4];
         };
@@ -233,6 +249,10 @@ namespace Math
     };
 
     Vec4 operator*(float scalar, const Vec4 &v);
+    inline Vec4 operator+(const Vec4 &v, float scalar) { return v + Vec4(scalar); }
+    inline Vec4 operator+(float scalar, const Vec4 &v) { return Vec4(scalar) + v; }
+    inline Vec4 operator-(const Vec4 &v, float scalar) { return v - Vec4(scalar); }
+    inline Vec4 operator-(float scalar, const Vec4 &v) { return Vec4(scalar) - v; }
     std::ostream &operator<<(std::ostream &os, const Vec4 &v);
 
     struct Mat2
@@ -322,7 +342,7 @@ namespace Math
     };
 
     std::ostream &operator<<(std::ostream &os, const Transform2D &t);
-#endif 
+#endif
 
     struct Mat4;
 
@@ -587,6 +607,6 @@ namespace Math
     };
 #endif 
 
-} 
+}
 
-#endif 
+#endif
