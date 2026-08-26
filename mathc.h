@@ -99,10 +99,6 @@ namespace Math
             {
                 float x, y, z;
             };
-            struct
-            {
-                float r, g, b;
-            };
             float v[3];
         };
 
@@ -183,10 +179,6 @@ namespace Math
             struct
             {
                 float x, y, z, w;
-            };
-            struct
-            {
-                float r, g, b, a;
             };
             float v[4];
         };
