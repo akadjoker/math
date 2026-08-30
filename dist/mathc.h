@@ -93,7 +93,13 @@ namespace Math
     };
 
     Vec2 operator*(float scalar, const Vec2 &v);
+    inline Vec2 operator+(const Vec2 &v, float scalar) { return v + Vec2(scalar); }
+    inline Vec2 operator+(float scalar, const Vec2 &v) { return Vec2(scalar) + v; }
+    inline Vec2 operator-(const Vec2 &v, float scalar) { return v - Vec2(scalar); }
+    inline Vec2 operator-(float scalar, const Vec2 &v) { return Vec2(scalar) - v; }
     std::ostream &operator<<(std::ostream &os, const Vec2 &v);
+
+    struct Vec4;
 
     struct Vec3
     {
@@ -110,6 +116,7 @@ namespace Math
         Vec3(float x, float y, float z);
         explicit Vec3(float scalar);
         Vec3(const Vec2 &xy, float z);
+        Vec3(const Vec4 &v);
 
         float &operator[](int index);
         const float &operator[](int index) const;
@@ -169,6 +176,10 @@ namespace Math
     };
 
     Vec3 operator*(float scalar, const Vec3 &v);
+    inline Vec3 operator+(const Vec3 &v, float scalar) { return v + Vec3(scalar); }
+    inline Vec3 operator+(float scalar, const Vec3 &v) { return Vec3(scalar) + v; }
+    inline Vec3 operator-(const Vec3 &v, float scalar) { return v - Vec3(scalar); }
+    inline Vec3 operator-(float scalar, const Vec3 &v) { return Vec3(scalar) - v; }
     std::ostream &operator<<(std::ostream &os, const Vec3 &v);
 
     struct alignas(16) Vec4
@@ -240,6 +251,10 @@ namespace Math
     };
 
     Vec4 operator*(float scalar, const Vec4 &v);
+    inline Vec4 operator+(const Vec4 &v, float scalar) { return v + Vec4(scalar); }
+    inline Vec4 operator+(float scalar, const Vec4 &v) { return Vec4(scalar) + v; }
+    inline Vec4 operator-(const Vec4 &v, float scalar) { return v - Vec4(scalar); }
+    inline Vec4 operator-(float scalar, const Vec4 &v) { return Vec4(scalar) - v; }
     std::ostream &operator<<(std::ostream &os, const Vec4 &v);
 
     struct Mat2
@@ -261,6 +276,10 @@ namespace Math
         Mat2 operator*(const Mat2 &other) const;
         Mat2 operator*(float scalar) const;
         Vec2 operator*(const Vec2 &v) const;
+
+        Mat2 &operator+=(const Mat2 &other);
+        Mat2 &operator-=(const Mat2 &other);
+        Mat2 &operator*=(float scalar);
 
         bool operator==(const Mat2 &other) const;
         bool operator!=(const Mat2 &other) const;
@@ -325,7 +344,9 @@ namespace Math
     };
 
     std::ostream &operator<<(std::ostream &os, const Transform2D &t);
-#endif 
+#endif
+
+    struct Mat4;
 
     struct Mat3
     {
@@ -335,6 +356,7 @@ namespace Math
         explicit Mat3(float scalar);
         Mat3(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22);
         Mat3(const Vec3 &col0, const Vec3 &col1, const Vec3 &col2);
+        Mat3(const Mat4 &m);
 #ifndef MATHC_NO_EXTRA
 
         explicit Mat3(const Transform2D &t);
@@ -350,6 +372,10 @@ namespace Math
         Mat3 operator*(const Mat3 &other) const;
         Mat3 operator*(float scalar) const;
         Vec3 operator*(const Vec3 &v) const;
+
+        Mat3 &operator+=(const Mat3 &other);
+        Mat3 &operator-=(const Mat3 &other);
+        Mat3 &operator*=(float scalar);
 
         bool operator==(const Mat3 &other) const;
         bool operator!=(const Mat3 &other) const;
@@ -396,6 +422,10 @@ namespace Math
         Mat4 operator*(const Mat4 &other) const;
         Mat4 operator*(float scalar) const;
         Vec4 operator*(const Vec4 &v) const;
+
+        Mat4 &operator+=(const Mat4 &other);
+        Mat4 &operator-=(const Mat4 &other);
+        Mat4 &operator*=(float scalar);
 
         bool operator==(const Mat4 &other) const;
         bool operator!=(const Mat4 &other) const;
@@ -444,6 +474,7 @@ namespace Math
 
         Quaternion();
         Quaternion(float x, float y, float z, float w);
+        Quaternion(float w, const Vec3 &xyz);
 
         float &operator[](int index);
         const float &operator[](int index) const;
@@ -453,6 +484,9 @@ namespace Math
         Quaternion operator*(const Quaternion &other) const;
         Quaternion operator*(float scalar) const;
         Vec3 operator*(const Vec3 &v) const;
+
+        Quaternion &operator+=(const Quaternion &other);
+        Quaternion &operator-=(const Quaternion &other);
 
         Quaternion operator-() const;
 
@@ -472,6 +506,7 @@ namespace Math
 
         Mat3 ToMat3() const;
         Mat4 ToMat4() const;
+        Vec3 ToEulerAngles() const;
 
         static Quaternion Identity();
         static Quaternion FromAxisAngle(const Vec3 &axis, float angleRad);
@@ -575,7 +610,7 @@ namespace Math
     };
 #endif 
 
-} 
+}
 
 #ifdef MATHC_IMPLEMENTATION
 
@@ -1518,6 +1553,19 @@ namespace Math
     }
     Mat4 Quaternion::ToMat4() const { return Mat4(ToMat3()); }
 
+    Vec3 Quaternion::ToEulerAngles() const
+    {
+        const float sinYaw = 2.0f * (w * y - z * x);
+        if (sinYaw >= 0.999999f)
+            return Vec3(0.0f, PI * 0.5f, -2.0f * std::atan2(x, w));
+        if (sinYaw <= -0.999999f)
+            return Vec3(0.0f, -PI * 0.5f, 2.0f * std::atan2(x, w));
+
+        return Vec3(std::atan2(2.0f * (w * x + y * z), 1.0f - 2.0f * (x * x + y * y)),
+                    std::asin(sinYaw),
+                    std::atan2(2.0f * (w * z + x * y), 1.0f - 2.0f * (y * y + z * z)));
+    }
+
     Quaternion Quaternion::Identity() { return Quaternion(); }
 
     Quaternion Quaternion::FromAxisAngle(const Vec3 &axis, float angleRad)
@@ -1839,6 +1887,22 @@ namespace Math
         return true;
     }
 #endif 
+
+    Vec3::Vec3(const Vec4 &v) : x(v.x), y(v.y), z(v.z) {}
+    Mat3::Mat3(const Mat4 &m) : col0(m[0].xyz()), col1(m[1].xyz()), col2(m[2].xyz()) {}
+    Quaternion::Quaternion(float w, const Vec3 &xyz) : x(xyz.x), y(xyz.y), z(xyz.z), w(w) {}
+
+    Mat2 &Mat2::operator+=(const Mat2 &o) { col0 += o.col0; col1 += o.col1; return *this; }
+    Mat2 &Mat2::operator-=(const Mat2 &o) { col0 -= o.col0; col1 -= o.col1; return *this; }
+    Mat2 &Mat2::operator*=(float s) { col0 *= s; col1 *= s; return *this; }
+    Mat3 &Mat3::operator+=(const Mat3 &o) { col0 += o.col0; col1 += o.col1; col2 += o.col2; return *this; }
+    Mat3 &Mat3::operator-=(const Mat3 &o) { col0 -= o.col0; col1 -= o.col1; col2 -= o.col2; return *this; }
+    Mat3 &Mat3::operator*=(float s) { col0 *= s; col1 *= s; col2 *= s; return *this; }
+    Mat4 &Mat4::operator+=(const Mat4 &o) { col0 += o.col0; col1 += o.col1; col2 += o.col2; col3 += o.col3; return *this; }
+    Mat4 &Mat4::operator-=(const Mat4 &o) { col0 -= o.col0; col1 -= o.col1; col2 -= o.col2; col3 -= o.col3; return *this; }
+    Mat4 &Mat4::operator*=(float s) { col0 *= s; col1 *= s; col2 *= s; col3 *= s; return *this; }
+    Quaternion &Quaternion::operator+=(const Quaternion &o) { x += o.x; y += o.y; z += o.z; w += o.w; return *this; }
+    Quaternion &Quaternion::operator-=(const Quaternion &o) { x -= o.x; y -= o.y; z -= o.z; w -= o.w; return *this; }
 
 } 
 

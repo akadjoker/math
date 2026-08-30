@@ -496,6 +496,7 @@ namespace Math
 
         Mat3 ToMat3() const;
         Mat4 ToMat4() const;
+        Vec3 ToEulerAngles() const;
 
         static Quaternion Identity();
         static Quaternion FromAxisAngle(const Vec3 &axis, float angleRad);

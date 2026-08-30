@@ -938,6 +938,19 @@ namespace Math
     }
     Mat4 Quaternion::ToMat4() const { return Mat4(ToMat3()); }
 
+    Vec3 Quaternion::ToEulerAngles() const
+    {
+        const float sinYaw = 2.0f * (w * y - z * x);
+        if (sinYaw >= 0.999999f)
+            return Vec3(0.0f, PI * 0.5f, -2.0f * std::atan2(x, w));
+        if (sinYaw <= -0.999999f)
+            return Vec3(0.0f, -PI * 0.5f, 2.0f * std::atan2(x, w));
+
+        return Vec3(std::atan2(2.0f * (w * x + y * z), 1.0f - 2.0f * (x * x + y * y)),
+                    std::asin(sinYaw),
+                    std::atan2(2.0f * (w * z + x * y), 1.0f - 2.0f * (y * y + z * z)));
+    }
+
     Quaternion Quaternion::Identity() { return Quaternion(); }
 
     Quaternion Quaternion::FromAxisAngle(const Vec3 &axis, float angleRad)

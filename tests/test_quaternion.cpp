@@ -94,6 +94,31 @@ TEST(Quaternion, FromEulerAnglesMatchesGlm) {
     EXPECT_TRUE(QuatNear(q, g));
 }
 
+TEST(Quaternion, ToEulerAnglesRoundTripsThroughFromEulerAngles) {
+    const float pitch = 0.4f, yaw = 0.9f, roll = -0.3f;
+    const Quaternion q = Quaternion::FromEulerAngles(pitch, yaw, roll);
+    const Vec3 euler = q.ToEulerAngles();
+    EXPECT_NEAR(euler.x, pitch, 1e-4f);
+    EXPECT_NEAR(euler.y, yaw, 1e-4f);
+    EXPECT_NEAR(euler.z, roll, 1e-4f);
+}
+
+TEST(Quaternion, ToEulerAnglesMatchesGlmEulerAngles) {
+    const Quaternion q = Quaternion::FromAxisAngle(Vec3(0.2f, -0.6f, 0.8f).Normalized(), 1.1f);
+    const Vec3 euler = q.ToEulerAngles();
+    const glm::vec3 g = glm::eulerAngles(glm::quat(q.w, q.x, q.y, q.z));
+    EXPECT_NEAR(euler.x, g.x, 1e-4f);
+    EXPECT_NEAR(euler.y, g.y, 1e-4f);
+    EXPECT_NEAR(euler.z, g.z, 1e-4f);
+}
+
+TEST(Quaternion, ToEulerAnglesAtGimbalLockStillRoundTrips) {
+    const Quaternion q = Quaternion::FromEulerAngles(0.0f, Math::PI * 0.5f, 0.7f);
+    const Vec3 euler = q.ToEulerAngles();
+    const Quaternion again = Quaternion::FromEulerAngles(euler.x, euler.y, euler.z);
+    EXPECT_TRUE(QuatNear(again, glm::quat(q.w, q.x, q.y, q.z)));
+}
+
 TEST(Quaternion, FromMat3RoundTripsThroughToMat3) {
     Quaternion original = Quaternion::FromAxisAngle(Vec3(0.2f, -0.6f, 0.8f).Normalized(), 1.2f);
     Mat3 m = original.ToMat3();
