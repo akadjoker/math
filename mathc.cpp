@@ -4,158 +4,14 @@
 #include <cstring>
 #include <limits>
 
-#if defined(__GNUC__) || defined(__clang__)
-#define MATHC_SIMD 1
-typedef float SimdF4 __attribute__((vector_size(16)));
-#else
-#define MATHC_SIMD 0
-#endif
-
 namespace Math
 {
-
-#if MATHC_SIMD
-    namespace
-    {
-
-        inline SimdF4 LoadV4(const Vec4 &v)
-        {
-            SimdF4 r;
-            std::memcpy(&r, &v, sizeof(r));
-            return r;
-        }
-        inline Vec4 StoreV4(SimdF4 s)
-        {
-            Vec4 r;
-            std::memcpy(&r, &s, sizeof(r));
-            return r;
-        }
-    }
-#endif
 
     const Vec2 Vec2::Zero = Vec2(0.0f, 0.0f);
     const Vec2 Vec2::One = Vec2(1.0f, 1.0f);
     const Vec2 Vec2::UnitX = Vec2(1.0f, 0.0f);
     const Vec2 Vec2::UnitY = Vec2(0.0f, 1.0f);
 
-    Vec2::Vec2() : x(0.0f), y(0.0f) {}
-    Vec2::Vec2(float x, float y) : x(x), y(y) {}
-    Vec2::Vec2(float scalar) : x(scalar), y(scalar) {}
-
-    float &Vec2::operator[](int index) { return v[index]; }
-    const float &Vec2::operator[](int index) const { return v[index]; }
-
-    Vec2 Vec2::operator+(const Vec2 &o) const { return Vec2(x + o.x, y + o.y); }
-    Vec2 Vec2::operator-(const Vec2 &o) const { return Vec2(x - o.x, y - o.y); }
-    Vec2 Vec2::operator*(const Vec2 &o) const { return Vec2(x * o.x, y * o.y); }
-    Vec2 Vec2::operator/(const Vec2 &o) const { return Vec2(x / o.x, y / o.y); }
-
-    Vec2 Vec2::operator*(float s) const { return Vec2(x * s, y * s); }
-    Vec2 Vec2::operator/(float s) const
-    {
-        float inv = 1.0f / s;
-        return Vec2(x * inv, y * inv);
-    }
-
-    Vec2 &Vec2::operator+=(const Vec2 &o)
-    {
-        x += o.x;
-        y += o.y;
-        return *this;
-    }
-    Vec2 &Vec2::operator-=(const Vec2 &o)
-    {
-        x -= o.x;
-        y -= o.y;
-        return *this;
-    }
-    Vec2 &Vec2::operator*=(const Vec2 &o)
-    {
-        x *= o.x;
-        y *= o.y;
-        return *this;
-    }
-    Vec2 &Vec2::operator/=(const Vec2 &o)
-    {
-        x /= o.x;
-        y /= o.y;
-        return *this;
-    }
-    Vec2 &Vec2::operator*=(float s)
-    {
-        x *= s;
-        y *= s;
-        return *this;
-    }
-    Vec2 &Vec2::operator/=(float s)
-    {
-        float inv = 1.0f / s;
-        x *= inv;
-        y *= inv;
-        return *this;
-    }
-
-    Vec2 Vec2::operator-() const { return Vec2(-x, -y); }
-
-    bool Vec2::operator==(const Vec2 &o) const
-    {
-        return std::fabs(x - o.x) < EPSILON && std::fabs(y - o.y) < EPSILON;
-    }
-    bool Vec2::operator!=(const Vec2 &o) const { return !(*this == o); }
-
-    float Vec2::LengthSquared() const { return x * x + y * y; }
-    float Vec2::Length() const { return std::sqrt(LengthSquared()); }
-
-    Vec2 Vec2::Normalized() const
-    {
-        float inv = 1.0f / std::sqrt(LengthSquared());
-        return Vec2(x * inv, y * inv);
-    }
-
-    Vec2 Vec2::NormalizedSafe() const
-    {
-        float lenSq = std::max(LengthSquared(), EPSILON * EPSILON);
-        float inv = 1.0f / std::sqrt(lenSq);
-        return Vec2(x * inv, y * inv);
-    }
-
-    void Vec2::Normalize() { *this = Normalized(); }
-    void Vec2::NormalizeSafe() { *this = NormalizedSafe(); }
-
-    float Vec2::Dot(const Vec2 &o) const { return x * o.x + y * o.y; }
-
-    float Vec2::Cross(const Vec2 &o) const { return x * o.y - y * o.x; }
-
-    float Vec2::Angle() const { return std::atan2(y, x); }
-    float Vec2::AngleDeg() const { return Angle() * RAD2DEG; }
-
-    Vec2 Vec2::Rotate(float angleRad) const
-    {
-        float s = std::sin(angleRad);
-        float c = std::cos(angleRad);
-        return Vec2(x * c - y * s, x * s + y * c);
-    }
-    Vec2 Vec2::RotateDeg(float angleDeg) const { return Rotate(angleDeg * DEG2RAD); }
-
-    Vec2 Vec2::FromAngle(float angleRad) { return Vec2(std::cos(angleRad), std::sin(angleRad)); }
-    Vec2 Vec2::FromAngleDeg(float angleDeg) { return FromAngle(angleDeg * DEG2RAD); }
-
-    float Vec2::AngleBetween(const Vec2 &a, const Vec2 &b)
-    {
-        return std::atan2(a.Cross(b), a.Dot(b));
-    }
-    float Vec2::AngleBetweenDeg(const Vec2 &a, const Vec2 &b) { return AngleBetween(a, b) * RAD2DEG; }
-
-    float Vec2::Dot(const Vec2 &a, const Vec2 &b) { return a.Dot(b); }
-    float Vec2::Cross(const Vec2 &a, const Vec2 &b) { return a.Cross(b); }
-    float Vec2::Distance(const Vec2 &a, const Vec2 &b) { return (a - b).Length(); }
-    float Vec2::DistanceSquared(const Vec2 &a, const Vec2 &b) { return (a - b).LengthSquared(); }
-    Vec2 Vec2::Lerp(const Vec2 &a, const Vec2 &b, float t) { return a + (b - a) * t; }
-    Vec2 Vec2::Min(const Vec2 &a, const Vec2 &b) { return Vec2(a.x < b.x ? a.x : b.x, a.y < b.y ? a.y : b.y); }
-    Vec2 Vec2::Max(const Vec2 &a, const Vec2 &b) { return Vec2(a.x > b.x ? a.x : b.x, a.y > b.y ? a.y : b.y); }
-    Vec2 Vec2::Clamp(const Vec2 &v, const Vec2 &lo, const Vec2 &hi) { return Min(Max(v, lo), hi); }
-
-    Vec2 operator*(float scalar, const Vec2 &v) { return v * scalar; }
     std::ostream &operator<<(std::ostream &os, const Vec2 &v)
     {
         return os << "(" << v.x << ", " << v.y << ")";
@@ -167,150 +23,6 @@ namespace Math
     const Vec3 Vec3::UnitY = Vec3(0.0f, 1.0f, 0.0f);
     const Vec3 Vec3::UnitZ = Vec3(0.0f, 0.0f, 1.0f);
 
-    Vec3::Vec3() : x(0.0f), y(0.0f), z(0.0f) {}
-    Vec3::Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
-    Vec3::Vec3(float scalar) : x(scalar), y(scalar), z(scalar) {}
-    Vec3::Vec3(const Vec2 &xy, float z) : x(xy.x), y(xy.y), z(z) {}
-
-    float &Vec3::operator[](int index) { return v[index]; }
-    const float &Vec3::operator[](int index) const { return v[index]; }
-
-    Vec3 Vec3::operator+(const Vec3 &o) const { return Vec3(x + o.x, y + o.y, z + o.z); }
-    Vec3 Vec3::operator-(const Vec3 &o) const { return Vec3(x - o.x, y - o.y, z - o.z); }
-    Vec3 Vec3::operator*(const Vec3 &o) const { return Vec3(x * o.x, y * o.y, z * o.z); }
-    Vec3 Vec3::operator/(const Vec3 &o) const { return Vec3(x / o.x, y / o.y, z / o.z); }
-
-    Vec3 Vec3::operator*(float s) const { return Vec3(x * s, y * s, z * s); }
-    Vec3 Vec3::operator/(float s) const
-    {
-        float inv = 1.0f / s;
-        return Vec3(x * inv, y * inv, z * inv);
-    }
-
-    Vec3 &Vec3::operator+=(const Vec3 &o)
-    {
-        x += o.x;
-        y += o.y;
-        z += o.z;
-        return *this;
-    }
-    Vec3 &Vec3::operator-=(const Vec3 &o)
-    {
-        x -= o.x;
-        y -= o.y;
-        z -= o.z;
-        return *this;
-    }
-    Vec3 &Vec3::operator*=(const Vec3 &o)
-    {
-        x *= o.x;
-        y *= o.y;
-        z *= o.z;
-        return *this;
-    }
-    Vec3 &Vec3::operator/=(const Vec3 &o)
-    {
-        x /= o.x;
-        y /= o.y;
-        z /= o.z;
-        return *this;
-    }
-    Vec3 &Vec3::operator*=(float s)
-    {
-        x *= s;
-        y *= s;
-        z *= s;
-        return *this;
-    }
-    Vec3 &Vec3::operator/=(float s)
-    {
-        float inv = 1.0f / s;
-        x *= inv;
-        y *= inv;
-        z *= inv;
-        return *this;
-    }
-
-    Vec3 Vec3::operator-() const { return Vec3(-x, -y, -z); }
-
-    bool Vec3::operator==(const Vec3 &o) const
-    {
-        return std::fabs(x - o.x) < EPSILON && std::fabs(y - o.y) < EPSILON && std::fabs(z - o.z) < EPSILON;
-    }
-    bool Vec3::operator!=(const Vec3 &o) const { return !(*this == o); }
-
-    float Vec3::LengthSquared() const { return x * x + y * y + z * z; }
-    float Vec3::Length() const { return std::sqrt(LengthSquared()); }
-
-    Vec3 Vec3::Normalized() const
-    {
-        float inv = 1.0f / std::sqrt(LengthSquared());
-        return Vec3(x * inv, y * inv, z * inv);
-    }
-
-    Vec3 Vec3::NormalizedSafe() const
-    {
-        float lenSq = std::max(LengthSquared(), EPSILON * EPSILON);
-        float inv = 1.0f / std::sqrt(lenSq);
-        return Vec3(x * inv, y * inv, z * inv);
-    }
-
-    void Vec3::Normalize() { *this = Normalized(); }
-    void Vec3::NormalizeSafe() { *this = NormalizedSafe(); }
-
-    float Vec3::Dot(const Vec3 &o) const { return x * o.x + y * o.y + z * o.z; }
-
-    Vec3 Vec3::Cross(const Vec3 &o) const
-    {
-        return Vec3(y * o.z - z * o.y, z * o.x - x * o.z, x * o.y - y * o.x);
-    }
-
-    Vec2 Vec3::xy() const { return Vec2(x, y); }
-
-    Vec3 Vec3::RotateX(float angleRad) const
-    {
-        float s = std::sin(angleRad);
-        float c = std::cos(angleRad);
-        return Vec3(x, y * c - z * s, y * s + z * c);
-    }
-    Vec3 Vec3::RotateY(float angleRad) const
-    {
-        float s = std::sin(angleRad);
-        float c = std::cos(angleRad);
-        return Vec3(x * c + z * s, y, -x * s + z * c);
-    }
-    Vec3 Vec3::RotateZ(float angleRad) const
-    {
-        float s = std::sin(angleRad);
-        float c = std::cos(angleRad);
-        return Vec3(x * c - y * s, x * s + y * c, z);
-    }
-    Vec3 Vec3::RotateXDeg(float angleDeg) const { return RotateX(angleDeg * DEG2RAD); }
-    Vec3 Vec3::RotateYDeg(float angleDeg) const { return RotateY(angleDeg * DEG2RAD); }
-    Vec3 Vec3::RotateZDeg(float angleDeg) const { return RotateZ(angleDeg * DEG2RAD); }
-
-    float Vec3::AngleBetween(const Vec3 &a, const Vec3 &b)
-    {
-        return std::atan2(a.Cross(b).Length(), a.Dot(b));
-    }
-    float Vec3::AngleBetweenDeg(const Vec3 &a, const Vec3 &b) { return AngleBetween(a, b) * RAD2DEG; }
-
-    float Vec3::Dot(const Vec3 &a, const Vec3 &b) { return a.Dot(b); }
-    Vec3 Vec3::Cross(const Vec3 &a, const Vec3 &b) { return a.Cross(b); }
-    float Vec3::Distance(const Vec3 &a, const Vec3 &b) { return (a - b).Length(); }
-    float Vec3::DistanceSquared(const Vec3 &a, const Vec3 &b) { return (a - b).LengthSquared(); }
-    Vec3 Vec3::Lerp(const Vec3 &a, const Vec3 &b, float t) { return a + (b - a) * t; }
-    Vec3 Vec3::Min(const Vec3 &a, const Vec3 &b)
-    {
-        return Vec3(a.x < b.x ? a.x : b.x, a.y < b.y ? a.y : b.y, a.z < b.z ? a.z : b.z);
-    }
-    Vec3 Vec3::Max(const Vec3 &a, const Vec3 &b)
-    {
-        return Vec3(a.x > b.x ? a.x : b.x, a.y > b.y ? a.y : b.y, a.z > b.z ? a.z : b.z);
-    }
-    Vec3 Vec3::Clamp(const Vec3 &v, const Vec3 &lo, const Vec3 &hi) { return Min(Max(v, lo), hi); }
-
-    Vec3 operator*(float scalar, const Vec3 &v) { return v * scalar; }
     std::ostream &operator<<(std::ostream &os, const Vec3 &v)
     {
         return os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
@@ -323,100 +35,6 @@ namespace Math
     const Vec4 Vec4::UnitZ = Vec4(0.0f, 0.0f, 1.0f, 0.0f);
     const Vec4 Vec4::UnitW = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-    Vec4::Vec4() : x(0.0f), y(0.0f), z(0.0f), w(0.0f) {}
-    Vec4::Vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
-    Vec4::Vec4(float scalar) : x(scalar), y(scalar), z(scalar), w(scalar) {}
-    Vec4::Vec4(const Vec3 &xyz, float w) : x(xyz.x), y(xyz.y), z(xyz.z), w(w) {}
-    Vec4::Vec4(const Vec2 &xy, float z, float w) : x(xy.x), y(xy.y), z(z), w(w) {}
-
-    float &Vec4::operator[](int index) { return v[index]; }
-    const float &Vec4::operator[](int index) const { return v[index]; }
-
-#if MATHC_SIMD
-    Vec4 Vec4::operator+(const Vec4 &o) const { return StoreV4(LoadV4(*this) + LoadV4(o)); }
-    Vec4 Vec4::operator-(const Vec4 &o) const { return StoreV4(LoadV4(*this) - LoadV4(o)); }
-    Vec4 Vec4::operator*(const Vec4 &o) const { return StoreV4(LoadV4(*this) * LoadV4(o)); }
-    Vec4 Vec4::operator/(const Vec4 &o) const { return StoreV4(LoadV4(*this) / LoadV4(o)); }
-    Vec4 Vec4::operator*(float s) const { return StoreV4(LoadV4(*this) * SimdF4{s, s, s, s}); }
-    Vec4 Vec4::operator/(float s) const { return StoreV4(LoadV4(*this) / SimdF4{s, s, s, s}); }
-#else
-    Vec4 Vec4::operator+(const Vec4 &o) const { return Vec4(x + o.x, y + o.y, z + o.z, w + o.w); }
-    Vec4 Vec4::operator-(const Vec4 &o) const { return Vec4(x - o.x, y - o.y, z - o.z, w - o.w); }
-    Vec4 Vec4::operator*(const Vec4 &o) const { return Vec4(x * o.x, y * o.y, z * o.z, w * o.w); }
-    Vec4 Vec4::operator/(const Vec4 &o) const { return Vec4(x / o.x, y / o.y, z / o.z, w / o.w); }
-    Vec4 Vec4::operator*(float s) const { return Vec4(x * s, y * s, z * s, w * s); }
-    Vec4 Vec4::operator/(float s) const
-    {
-        float inv = 1.0f / s;
-        return Vec4(x * inv, y * inv, z * inv, w * inv);
-    }
-#endif
-
-    Vec4 &Vec4::operator+=(const Vec4 &o) { return *this = *this + o; }
-    Vec4 &Vec4::operator-=(const Vec4 &o) { return *this = *this - o; }
-    Vec4 &Vec4::operator*=(const Vec4 &o) { return *this = *this * o; }
-    Vec4 &Vec4::operator/=(const Vec4 &o) { return *this = *this / o; }
-    Vec4 &Vec4::operator*=(float s) { return *this = *this * s; }
-    Vec4 &Vec4::operator/=(float s) { return *this = *this / s; }
-
-    Vec4 Vec4::operator-() const { return Vec4(-x, -y, -z, -w); }
-
-    bool Vec4::operator==(const Vec4 &o) const
-    {
-        return std::fabs(x - o.x) < EPSILON && std::fabs(y - o.y) < EPSILON &&
-               std::fabs(z - o.z) < EPSILON && std::fabs(w - o.w) < EPSILON;
-    }
-    bool Vec4::operator!=(const Vec4 &o) const { return !(*this == o); }
-
-    float Vec4::LengthSquared() const { return x * x + y * y + z * z + w * w; }
-    float Vec4::Length() const { return std::sqrt(LengthSquared()); }
-
-    Vec4 Vec4::Normalized() const
-    {
-        float inv = 1.0f / std::sqrt(LengthSquared());
-        return *this * inv;
-    }
-
-    Vec4 Vec4::NormalizedSafe() const
-    {
-        float lenSq = std::max(LengthSquared(), EPSILON * EPSILON);
-        float inv = 1.0f / std::sqrt(lenSq);
-        return *this * inv;
-    }
-
-    void Vec4::Normalize() { *this = Normalized(); }
-    void Vec4::NormalizeSafe() { *this = NormalizedSafe(); }
-
-    float Vec4::Dot(const Vec4 &o) const { return x * o.x + y * o.y + z * o.z + w * o.w; }
-
-    Vec2 Vec4::xy() const { return Vec2(x, y); }
-    Vec3 Vec4::xyz() const { return Vec3(x, y, z); }
-
-    float Vec4::AngleBetween(const Vec4 &a, const Vec4 &b)
-    {
-        float d = a.Dot(b) / (a.Length() * b.Length());
-        d = std::max(-1.0f, std::min(1.0f, d));
-        return std::acos(d);
-    }
-    float Vec4::AngleBetweenDeg(const Vec4 &a, const Vec4 &b) { return AngleBetween(a, b) * RAD2DEG; }
-
-    float Vec4::Dot(const Vec4 &a, const Vec4 &b) { return a.Dot(b); }
-    float Vec4::Distance(const Vec4 &a, const Vec4 &b) { return (a - b).Length(); }
-    float Vec4::DistanceSquared(const Vec4 &a, const Vec4 &b) { return (a - b).LengthSquared(); }
-    Vec4 Vec4::Lerp(const Vec4 &a, const Vec4 &b, float t) { return a + (b - a) * t; }
-    Vec4 Vec4::Min(const Vec4 &a, const Vec4 &b)
-    {
-        return Vec4(a.x < b.x ? a.x : b.x, a.y < b.y ? a.y : b.y,
-                     a.z < b.z ? a.z : b.z, a.w < b.w ? a.w : b.w);
-    }
-    Vec4 Vec4::Max(const Vec4 &a, const Vec4 &b)
-    {
-        return Vec4(a.x > b.x ? a.x : b.x, a.y > b.y ? a.y : b.y,
-                     a.z > b.z ? a.z : b.z, a.w > b.w ? a.w : b.w);
-    }
-    Vec4 Vec4::Clamp(const Vec4 &v, const Vec4 &lo, const Vec4 &hi) { return Min(Max(v, lo), hi); }
-
-    Vec4 operator*(float scalar, const Vec4 &v) { return v * scalar; }
     std::ostream &operator<<(std::ostream &os, const Vec4 &v)
     {
         return os << "(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
@@ -847,85 +465,6 @@ namespace Math
         return os << "[" << m.col0 << ", " << m.col1 << ", " << m.col2 << ", " << m.col3 << "]";
     }
 
-    Quaternion::Quaternion() : x(0.0f), y(0.0f), z(0.0f), w(1.0f) {}
-    Quaternion::Quaternion(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
-
-    float &Quaternion::operator[](int index) { return v[index]; }
-    const float &Quaternion::operator[](int index) const { return v[index]; }
-
-#if MATHC_SIMD
-
-    static inline SimdF4 LoadQ(const Quaternion &q)
-    {
-        SimdF4 r;
-        std::memcpy(&r, &q, sizeof(r));
-        return r;
-    }
-    static inline Quaternion StoreQ(SimdF4 s)
-    {
-        Quaternion r;
-        std::memcpy(&r, &s, sizeof(r));
-        return r;
-    }
-    Quaternion Quaternion::operator+(const Quaternion &o) const { return StoreQ(LoadQ(*this) + LoadQ(o)); }
-    Quaternion Quaternion::operator-(const Quaternion &o) const { return StoreQ(LoadQ(*this) - LoadQ(o)); }
-    Quaternion Quaternion::operator*(float s) const { return StoreQ(LoadQ(*this) * SimdF4{s, s, s, s}); }
-#else
-    Quaternion Quaternion::operator+(const Quaternion &o) const { return Quaternion(x + o.x, y + o.y, z + o.z, w + o.w); }
-    Quaternion Quaternion::operator-(const Quaternion &o) const { return Quaternion(x - o.x, y - o.y, z - o.z, w - o.w); }
-    Quaternion Quaternion::operator*(float s) const { return Quaternion(x * s, y * s, z * s, w * s); }
-#endif
-
-    Quaternion Quaternion::operator*(const Quaternion &o) const
-    {
-        return Quaternion(
-            w * o.x + x * o.w + y * o.z - z * o.y,
-            w * o.y - x * o.z + y * o.w + z * o.x,
-            w * o.z + x * o.y - y * o.x + z * o.w,
-            w * o.w - x * o.x - y * o.y - z * o.z);
-    }
-
-    Vec3 Quaternion::operator*(const Vec3 &v) const
-    {
-        Vec3 qv(x, y, z);
-        Vec3 t = qv.Cross(v) * 2.0f;
-        return v + t * w + qv.Cross(t);
-    }
-
-    Quaternion Quaternion::operator-() const { return Quaternion(-x, -y, -z, -w); }
-
-    bool Quaternion::operator==(const Quaternion &o) const
-    {
-        return std::fabs(x - o.x) < EPSILON && std::fabs(y - o.y) < EPSILON &&
-               std::fabs(z - o.z) < EPSILON && std::fabs(w - o.w) < EPSILON;
-    }
-    bool Quaternion::operator!=(const Quaternion &o) const { return !(*this == o); }
-
-    float Quaternion::LengthSquared() const { return x * x + y * y + z * z + w * w; }
-    float Quaternion::Length() const { return std::sqrt(LengthSquared()); }
-
-    Quaternion Quaternion::Normalized() const
-    {
-        float inv = 1.0f / std::sqrt(LengthSquared());
-        return *this * inv;
-    }
-    Quaternion Quaternion::NormalizedSafe() const
-    {
-        float lenSq = std::max(LengthSquared(), EPSILON * EPSILON);
-        float inv = 1.0f / std::sqrt(lenSq);
-        return *this * inv;
-    }
-    void Quaternion::Normalize() { *this = Normalized(); }
-    void Quaternion::NormalizeSafe() { *this = NormalizedSafe(); }
-
-    Quaternion Quaternion::Conjugate() const { return Quaternion(-x, -y, -z, w); }
-    Quaternion Quaternion::Inverse() const
-    {
-        float invLenSq = 1.0f / LengthSquared();
-        return Quaternion(-x * invLenSq, -y * invLenSq, -z * invLenSq, w * invLenSq);
-    }
-    float Quaternion::Dot(const Quaternion &o) const { return x * o.x + y * o.y + z * o.z + w * o.w; }
-
     Mat3 Quaternion::ToMat3() const
     {
         float xx = x * x, yy = y * y, zz = z * z;
@@ -937,15 +476,6 @@ namespace Math
             2.0f * (xz + wy), 2.0f * (yz - wx), 1.0f - 2.0f * (xx + yy));
     }
     Mat4 Quaternion::ToMat4() const { return Mat4(ToMat3()); }
-
-    Quaternion Quaternion::Identity() { return Quaternion(); }
-
-    Quaternion Quaternion::FromAxisAngle(const Vec3 &axis, float angleRad)
-    {
-        float half = angleRad * 0.5f;
-        float s = std::sin(half);
-        return Quaternion(axis.x * s, axis.y * s, axis.z * s, std::cos(half));
-    }
 
     Quaternion Quaternion::FromEulerAngles(float pitchX, float yawY, float rollZ)
     {
@@ -1031,14 +561,6 @@ namespace Math
         return FromMat3(Mat3(r, u, f));
     }
 
-    float Quaternion::Dot(const Quaternion &a, const Quaternion &b) { return a.Dot(b); }
-
-    Quaternion Quaternion::Lerp(const Quaternion &a, const Quaternion &b, float t)
-    {
-        Quaternion bb = a.Dot(b) < 0.0f ? -b : b;
-        return (a * (1.0f - t) + bb * t).Normalized();
-    }
-
     Quaternion Quaternion::Slerp(const Quaternion &a, const Quaternion &b, float t)
     {
         float d = a.Dot(b);
@@ -1061,7 +583,6 @@ namespace Math
         return a * s0 + bb * s1;
     }
 
-    Quaternion operator*(float scalar, const Quaternion &q) { return q * scalar; }
     std::ostream &operator<<(std::ostream &os, const Quaternion &q)
     {
         return os << "(" << q.x << ", " << q.y << ", " << q.z << ", " << q.w << ")";
