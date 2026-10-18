@@ -26,7 +26,7 @@ namespace Math
         inline Vec4 StoreV4(SimdF4 s)
         {
             Vec4 r;
-            std::memcpy(&r, &s, sizeof(r));
+            std::memcpy(static_cast<void *>(&r), &s, sizeof(r));
             return r;
         }
     }
@@ -863,7 +863,7 @@ namespace Math
     static inline Quaternion StoreQ(SimdF4 s)
     {
         Quaternion r;
-        std::memcpy(&r, &s, sizeof(r));
+        std::memcpy(static_cast<void *>(&r), &s, sizeof(r));
         return r;
     }
     inline Quaternion Quaternion::operator+(const Quaternion &o) const { return StoreQ(LoadQ(*this) + LoadQ(o)); }
