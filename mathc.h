@@ -602,4 +602,6 @@ namespace Math
 
 }
 
+#include "mathc.inl"
+
 #endif

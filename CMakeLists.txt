@@ -14,7 +14,7 @@ option(MATHC_NATIVE_ARCH "Enable -march=native (x86 host builds only)" ON)
 option(MATHC_BUILD_TESTS "Build the GoogleTest suite" ON)
 option(MATHC_BUILD_BENCH "Build the benchmark executables" ON)
 
-add_library(mathc STATIC mathc.cpp mathc.h)
+add_library(mathc STATIC mathc.cpp mathc.h mathc.inl)
 target_include_directories(mathc PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 find_path(GLM_INCLUDE_DIR glm/glm.hpp PATHS /usr/local/include /usr/include)
